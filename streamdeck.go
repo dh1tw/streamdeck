@@ -5,7 +5,6 @@ package StreamDeck
 import (
 	"fmt"
 	"image"
-	"log"
 	"os"
 
 	"github.com/disintegration/gift"
@@ -20,6 +19,12 @@ import (
 	_ "image/jpeg" // support jpeg
 	_ "image/png"  // support png
 )
+
+// VendorID is the USB VendorID assigned to Elgato (0x0fd9)
+const VendorID = 4057
+
+// ProductID is the USB ProductID assigned to Elgato's Stream Deck (0x0060)
+const ProductID = 96
 
 // NumButtons is the total amount of Buttons located on the Stream Deck.
 const NumButtons = 15
@@ -104,18 +109,40 @@ type StremDeckElement interface {
 	Draw() image.Image
 }
 
-// NewStreamDeck is the constructor of the StreamDeck object.
-func NewStreamDeck() (*StreamDeck, error) {
+// NewStreamDeck is the constructor of the StreamDeck object. If several StreamDecks
+// are connected to this PC, the Streamdeck can be selected by supplying
+// the optional serial number of the Device. In the examples folder there is
+// a small program which enumerates all available Stream Decks. If no serial number
+// is supplied, the first StreamDeck found will be selected.
+func NewStreamDeck(serial ...string) (*StreamDeck, error) {
 
-	devices := hid.Enumerate(4057, 96) // 0x0fd9, 0x0060
-
-	if len(devices) == 0 {
-		return nil, fmt.Errorf("no Elgato Stream Deck device found")
+	if len(serial) > 1 {
+		return nil, fmt.Errorf("only <= 1 serial numbers must be provided")
 	}
 
-	device, err := devices[0].Open()
+	devices := hid.Enumerate(VendorID, ProductID)
+
+	if len(devices) == 0 {
+		return nil, fmt.Errorf("no stream deck device found")
+	}
+
+	id := 0
+	if len(serial) == 1 {
+		found := false
+		for i, d := range devices {
+			if d.Serial == serial[0] {
+				id = i
+				found = true
+			}
+		}
+		if !found {
+			return nil, fmt.Errorf("no stream deck device found with serial number %s", serial[0])
+		}
+	}
+
+	device, err := devices[id].Open()
 	if err != nil {
-		log.Panic(err)
+		return nil, err
 	}
 
 	sd := &StreamDeck{

@@ -13,6 +13,7 @@ import (
 	"github.com/golang/freetype/truetype"
 )
 
+// Label is a basic Element for the StreamDeck.
 type Label struct {
 	streamDeck *esd.StreamDeck
 	text       string
@@ -23,6 +24,8 @@ type Label struct {
 
 var font *truetype.Font
 
+// in order to avoid the repetitive loading of the font, we load it once
+// during initalization into memory
 func init() {
 	fontBox := packr.NewBox("./fonts")
 
@@ -35,11 +38,12 @@ func init() {
 	}
 }
 
-func NewLabel(sd *esd.StreamDeck, keyIndex int, options ...func(*Label)) (*Label, error) {
+// NewLabel is the constructor method for a Label.
+func NewLabel(sd *esd.StreamDeck, btnIndex int, options ...func(*Label)) (*Label, error) {
 
 	l := &Label{
 		streamDeck: sd,
-		id:         keyIndex,
+		id:         btnIndex,
 		text:       "",
 		textColor:  image.White,
 		bgColor:    image.Black,
@@ -52,6 +56,7 @@ func NewLabel(sd *esd.StreamDeck, keyIndex int, options ...func(*Label)) (*Label
 	return l, nil
 }
 
+// Draw renders the Label on the designated Button.
 func (l *Label) Draw() error {
 	img := image.NewRGBA(image.Rect(0, 0, esd.ButtonSize, esd.ButtonSize))
 	l.addBgColor(l.bgColor, img)
@@ -61,11 +66,13 @@ func (l *Label) Draw() error {
 	return l.streamDeck.FillImage(l.id, img)
 }
 
+// SetText sets the text of the Label.
 func (l *Label) SetText(text string) error {
 	l.text = text
 	return l.Draw()
 }
 
+// SetBgColor sets the background color of the Label.
 func (l *Label) SetBgColor(color *image.Uniform) error {
 	l.bgColor = color
 	return l.Draw()

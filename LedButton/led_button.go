@@ -1,3 +1,4 @@
+//go:generate stringer -type=LEDColor
 package LedButton
 
 import (
@@ -14,6 +15,7 @@ import (
 	"github.com/golang/freetype/truetype"
 )
 
+// LedButton simulates a Button with a status LED.
 type LedButton struct {
 	streamDeck *esd.StreamDeck
 	ledColor   LEDColor
@@ -23,12 +25,17 @@ type LedButton struct {
 	state      bool
 }
 
+// LEDColor is the type which defines the colors of the LED
 type LEDColor int
 
 const (
+	//LEDRed is a red LED
 	LEDRed LEDColor = iota
+	// LEDGreen is a green LED
 	LEDGreen
+	// LEDYellow is a yellow LED
 	LEDYellow
+	// LEDOff turns the LED off
 	LEDOff
 )
 
@@ -38,6 +45,8 @@ var ledYellow image.Image
 var ledRed image.Image
 var font *truetype.Font
 
+// in order to avoid the repetitive loading of the font and the LED pictures,
+// we load them during initalization into memory
 func init() {
 	fontBox := packr.NewBox("./fonts")
 	imgBox := packr.NewBox("./images")
@@ -93,15 +102,18 @@ func NewLedButton(sd *esd.StreamDeck, id int, options ...func(*LedButton)) (*Led
 	return btn, nil
 }
 
+// State returns the state of the LED
 func (btn *LedButton) State() bool {
 	return btn.state
 }
 
+// SetState sets the state of the LED and renders the Button.
 func (btn *LedButton) SetState(state bool) error {
 	btn.state = state
 	return btn.Draw()
 }
 
+// Draw renders the Button
 func (btn *LedButton) Draw() error {
 
 	img := image.NewRGBA(image.Rect(0, 0, esd.ButtonSize, esd.ButtonSize))
@@ -112,6 +124,8 @@ func (btn *LedButton) Draw() error {
 	return btn.streamDeck.FillImage(btn.id, img)
 }
 
+// SetText sets the text (max 5 Chars) on the LedButton. The result will be
+// rendered immediately.
 func (btn *LedButton) SetText(text string) error {
 	btn.text = text
 	return btn.Draw()
