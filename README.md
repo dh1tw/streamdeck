@@ -2,7 +2,7 @@
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/dh1tw/go-elgato-stream-deck)](https://goreportcard.com/report/github.com/dh1tw/go-elgato-stream-deck)
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://img.shields.io/badge/license-MIT-blue.svg)
-[![GoDoc](https://godoc.org/github.com/dh1tw/go-elgato-stream-deck)](https://godoc.org/github.com/dh1tw/go-elgato-stream-deck?status.svg)
+[![GoDoc](https://godoc.org/github.com/dh1tw/go-elgato-stream-deck?status.svg)](https://godoc.org/github.com/dh1tw/go-elgato-stream-deck)
 
 ![go-elgato-stream-deck buttons](https://i.imgur.com/tEt3tPr.jpg "go-elgato-stream-deck Buttons")
 ![go-elgato-stream-deck slide show](https://i.imgur.com/gh1xXiU.jpg "go-elgato-stream-deck Slideshow")
