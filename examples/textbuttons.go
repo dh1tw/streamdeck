@@ -67,6 +67,7 @@ func main() {
 	if err != nil {
 		log.Panic(err)
 	}
+	defer sd.ClearAllBtns()
 
 	for i := 0; i < 15; i++ {
 		sd.WriteText(i, releasedText)
