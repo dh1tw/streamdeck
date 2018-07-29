@@ -1,6 +1,6 @@
 # go-elgato-stream-deck
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/dh1tw/go-elgato-stream-deck)](https://goreportcard.com/report/github.com/dh1tw/remoteRotator)
+[![Go Report Card](https://goreportcard.com/badge/github.com/dh1tw/go-elgato-stream-deck)](https://goreportcard.com/report/github.com/dh1tw/go-elgato-stream-deck)
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://img.shields.io/badge/license-MIT-blue.svg)
 
 ![go-elgato-stream-deck buttons](https://i.imgur.com/tEt3tPr.jpg "go-elgato-stream-deck Buttons")
@@ -8,9 +8,9 @@
 
 
 
-go-elgato-stream-deck is a library for interfacing with the [Elgato Stream Deck](https://www.elgato.com/en/gaming/stream-deck)
+**go-elgato-stream-deck** is a library for interfacing with the [Elgato Stream Deck](https://www.elgato.com/en/gaming/stream-deck)
 
-go-elgato-stream-deck is written in the programing language [Go](https://golang.org).
+This library is written in the programing language [Go](https://golang.org).
 
 ## Note
 This project provides only an API for the Elgato Stream Deck. It is not an
@@ -53,5 +53,7 @@ $ go run examples/slideshow.go
 
 ## Credits
 
-This project would not have been possible without the work of [Alex Van Camp](https://github.com/Lange)'s notes on the protocol of the Elgato's Stream Deck.
+This project would not have been possible without the work of [Alex Van Camp](https://github.com/Lange). In particular his
+[notes of the StreamDeck's protocol](https://github.com/Lange/node-elgato-stream-deck/blob/master/NOTES.md)
+were very helpful.
 Alex has provided a [reference implementation](https://github.com/Lange/node-elgato-stream-deck) in Javascript / Node.js.
