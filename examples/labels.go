@@ -20,16 +20,16 @@ import (
 
 func main() {
 
-	sd, err := sd.NewStreamDeck()
+	sdeck, err := sd.NewStreamDeck()
 	if err != nil {
 		log.Panic(err)
 	}
-	defer sd.ClearAllBtns()
+	defer sdeck.ClearAllBtns()
 
 	labels := make(map[int]*label.Label)
 
 	for i := 0; i < 15; i++ {
-		label, err := label.NewLabel(sd, i, label.Text(strconv.Itoa(i)))
+		label, err := label.NewLabel(sdeck, i, label.Text(strconv.Itoa(i)))
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -48,7 +48,7 @@ func main() {
 		}
 	}
 
-	sd.SetBtnEventCb(handleBtnEvents)
+	sdeck.SetBtnEventCb(handleBtnEvents)
 
 	ticker := time.NewTicker(time.Millisecond * 50)
 

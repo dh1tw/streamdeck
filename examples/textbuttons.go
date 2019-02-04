@@ -63,25 +63,25 @@ func main() {
 		Lines:   []sd.TextLine{lineLabel, lineReleased},
 	}
 
-	sd, err := sd.NewStreamDeck()
+	sdeck, err := sd.NewStreamDeck()
 	if err != nil {
 		log.Panic(err)
 	}
-	defer sd.ClearAllBtns()
+	defer sdeck.ClearAllBtns()
 
 	for i := 0; i < 15; i++ {
-		sd.WriteText(i, releasedText)
+		sdeck.WriteText(i, releasedText)
 	}
 
 	btnEvtCb := func(btnIndex int, state sd.BtnState) {
 		if state == sd.BtnPressed {
-			sd.WriteText(btnIndex, pressedText)
+			sdeck.WriteText(btnIndex, pressedText)
 		} else {
-			sd.WriteText(btnIndex, releasedText)
+			sdeck.WriteText(btnIndex, releasedText)
 		}
 	}
 
-	sd.SetBtnEventCb(btnEvtCb)
+	sdeck.SetBtnEventCb(btnEvtCb)
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
