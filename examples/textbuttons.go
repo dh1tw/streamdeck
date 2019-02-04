@@ -6,7 +6,7 @@ import (
 	"os"
 	"os/signal"
 
-	esd "github.com/dh1tw/go-elgato-stream-deck"
+	sd "github.com/dh1tw/streamdeck"
 	"github.com/gobuffalo/packr"
 	"github.com/golang/freetype"
 	"github.com/golang/freetype/truetype"
@@ -26,7 +26,7 @@ func main() {
 		log.Panic(err)
 	}
 
-	lineLabel := esd.TextLine{
+	lineLabel := sd.TextLine{
 		Font:      monoFont,
 		FontColor: color.RGBA{255, 255, 0, 0}, // Yellow
 		FontSize:  22,
@@ -35,7 +35,7 @@ func main() {
 		Text:      "STATE",
 	}
 
-	linePressed := esd.TextLine{
+	linePressed := sd.TextLine{
 		Font:      monoFont,
 		FontColor: color.RGBA{255, 255, 255, 0}, // White
 		FontSize:  14,
@@ -44,7 +44,7 @@ func main() {
 		Text:      "PRESSED",
 	}
 
-	lineReleased := esd.TextLine{
+	lineReleased := sd.TextLine{
 		Font:      monoFont,
 		FontColor: color.RGBA{255, 0, 0, 0}, // Red
 		FontSize:  14,
@@ -53,17 +53,17 @@ func main() {
 		Text:      "RELEASED",
 	}
 
-	pressedText := esd.TextButton{
+	pressedText := sd.TextButton{
 		BgColor: color.RGBA{0, 0, 0, 0},
-		Lines:   []esd.TextLine{lineLabel, linePressed},
+		Lines:   []sd.TextLine{lineLabel, linePressed},
 	}
 
-	releasedText := esd.TextButton{
+	releasedText := sd.TextButton{
 		BgColor: color.RGBA{0, 0, 0, 0},
-		Lines:   []esd.TextLine{lineLabel, lineReleased},
+		Lines:   []sd.TextLine{lineLabel, lineReleased},
 	}
 
-	sd, err := esd.NewStreamDeck()
+	sd, err := sd.NewStreamDeck()
 	if err != nil {
 		log.Panic(err)
 	}
@@ -73,8 +73,8 @@ func main() {
 		sd.WriteText(i, releasedText)
 	}
 
-	btnEvtCb := func(btnIndex int, state esd.BtnState) {
-		if state == esd.BtnPressed {
+	btnEvtCb := func(btnIndex int, state sd.BtnState) {
+		if state == sd.BtnPressed {
 			sd.WriteText(btnIndex, pressedText)
 		} else {
 			sd.WriteText(btnIndex, releasedText)

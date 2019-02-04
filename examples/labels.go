@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"time"
 
-	esd "github.com/dh1tw/go-elgato-stream-deck"
-	label "github.com/dh1tw/go-elgato-stream-deck/Label"
+	sd "github.com/dh1tw/streamdeck"
+	label "github.com/dh1tw/streamdeck/Label"
 )
 
 // This example will instanciate 15 labels on the streamdeck. Each Label
@@ -20,7 +20,7 @@ import (
 
 func main() {
 
-	sd, err := esd.NewStreamDeck()
+	sd, err := sd.NewStreamDeck()
 	if err != nil {
 		log.Panic(err)
 	}
@@ -37,9 +37,9 @@ func main() {
 		labels[i] = label
 	}
 
-	handleBtnEvents := func(btnIndex int, state esd.BtnState) {
+	handleBtnEvents := func(btnIndex int, state sd.BtnState) {
 		fmt.Printf("Button: %d, %s\n", btnIndex, state)
-		if state == esd.BtnPressed {
+		if state == sd.BtnPressed {
 			col := color.RGBA{0, 0, 153, 0}
 			labels[btnIndex].SetBgColor(image.NewUniform(col))
 		} else { // must be BtnReleased

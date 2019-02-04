@@ -7,7 +7,7 @@ import (
 	"image/draw"
 	"log"
 
-	esd "github.com/dh1tw/go-elgato-stream-deck"
+	sd "github.com/dh1tw/streamdeck"
 	"github.com/gobuffalo/packr"
 	"github.com/golang/freetype"
 	"github.com/golang/freetype/truetype"
@@ -15,7 +15,7 @@ import (
 
 // Label is a basic Element for the StreamDeck.
 type Label struct {
-	streamDeck *esd.StreamDeck
+	streamDeck *sd.StreamDeck
 	text       string
 	id         int
 	textColor  color.Color
@@ -39,7 +39,7 @@ func init() {
 }
 
 // NewLabel is the constructor method for a Label.
-func NewLabel(sd *esd.StreamDeck, btnIndex int, options ...func(*Label)) (*Label, error) {
+func NewLabel(sd *sd.StreamDeck, btnIndex int, options ...func(*Label)) (*Label, error) {
 
 	l := &Label{
 		streamDeck: sd,
@@ -58,7 +58,7 @@ func NewLabel(sd *esd.StreamDeck, btnIndex int, options ...func(*Label)) (*Label
 
 // Draw renders the Label on the designated Button.
 func (l *Label) Draw() error {
-	img := image.NewRGBA(image.Rect(0, 0, esd.ButtonSize, esd.ButtonSize))
+	img := image.NewRGBA(image.Rect(0, 0, sd.ButtonSize, sd.ButtonSize))
 	l.addBgColor(l.bgColor, img)
 	if err := l.addText(l.text, img); err != nil {
 		return err

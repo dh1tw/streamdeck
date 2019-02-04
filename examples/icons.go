@@ -8,7 +8,7 @@ import (
 	"os"
 	"os/signal"
 
-	esd "github.com/dh1tw/go-elgato-stream-deck"
+	sd "github.com/dh1tw/streamdeck"
 	"github.com/gobuffalo/packr"
 )
 
@@ -17,7 +17,7 @@ import (
 
 func main() {
 
-	sd, err := esd.NewStreamDeck()
+	sd, err := sd.NewStreamDeck()
 	if err != nil {
 		log.Panic(err)
 	}
@@ -72,9 +72,9 @@ func main() {
 
 	lightbulb := false
 
-	onPressedCb := func(btnIndex int, state esd.BtnState) {
+	onPressedCb := func(btnIndex int, state sd.BtnState) {
 		fmt.Printf("Button: %d, %s\n", btnIndex, state)
-		if btnIndex == 0 && state == esd.BtnPressed {
+		if btnIndex == 0 && state == sd.BtnPressed {
 			if lightbulb {
 				if err := sd.FillImage(0, lightbulbOff); err != nil {
 					log.Panic(err)

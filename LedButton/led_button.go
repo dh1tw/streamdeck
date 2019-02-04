@@ -10,14 +10,14 @@ import (
 
 	"github.com/gobuffalo/packr"
 
-	esd "github.com/dh1tw/go-elgato-stream-deck"
+	sd "github.com/dh1tw/streamdeck"
 	"github.com/golang/freetype"
 	"github.com/golang/freetype/truetype"
 )
 
 // LedButton simulates a Button with a status LED.
 type LedButton struct {
-	streamDeck *esd.StreamDeck
+	streamDeck *sd.StreamDeck
 	ledColor   LEDColor
 	text       string
 	textColor  *image.Uniform
@@ -80,7 +80,7 @@ func init() {
 
 // NewLedButton is the constructor for a new Led Button. Functional
 // arguments can be supplied to modify it's default characteristics
-func NewLedButton(sd *esd.StreamDeck, id int, options ...func(*LedButton)) (*LedButton, error) {
+func NewLedButton(sd *sd.StreamDeck, id int, options ...func(*LedButton)) (*LedButton, error) {
 
 	if sd == nil {
 		return nil, fmt.Errorf("stream deck must not be nil")
@@ -116,7 +116,7 @@ func (btn *LedButton) SetState(state bool) error {
 // Draw renders the Button
 func (btn *LedButton) Draw() error {
 
-	img := image.NewRGBA(image.Rect(0, 0, esd.ButtonSize, esd.ButtonSize))
+	img := image.NewRGBA(image.Rect(0, 0, sd.ButtonSize, sd.ButtonSize))
 	btn.addLED(btn.ledColor, img)
 	if err := btn.addText(btn.text, img); err != nil {
 		return err

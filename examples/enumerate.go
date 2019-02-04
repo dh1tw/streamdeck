@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	esd "github.com/dh1tw/go-elgato-stream-deck"
+	sd "github.com/dh1tw/streamdeck"
 	"github.com/karalabe/hid"
 )
 
@@ -21,7 +21,7 @@ var tmpl = template.Must(template.New("").Parse(
 // Enumerate shows all connected Elgato Stream Decks
 func main() {
 
-	devices := hid.Enumerate(esd.VendorID, esd.ProductID)
+	devices := hid.Enumerate(sd.VendorID, sd.ProductID)
 	if err := tmpl.Execute(os.Stdout, devices); err != nil {
 		log.Fatal(err)
 	}

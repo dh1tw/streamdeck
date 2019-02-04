@@ -6,17 +6,17 @@ import (
 	"os"
 	"os/signal"
 
-	esd "github.com/dh1tw/go-elgato-stream-deck"
-	ledBtn "github.com/dh1tw/go-elgato-stream-deck/LedButton"
+	sd "github.com/dh1tw/streamdeck"
+	ledBtn "github.com/dh1tw/streamdeck/LedButton"
 )
 
-// This example shows how to use the 'go-elgato-stream-deck/LedButton‘. It will
+// This example shows how to use the 'streamdeck/LedButton‘. It will
 // enumerate all the buttons on the panel with their ID and with a green LED
 // which can be activated / deactivated with a button press.
 
 func main() {
 
-	sd, err := esd.NewStreamDeck()
+	sd, err := sd.NewStreamDeck()
 	if err != nil {
 		log.Panic(err)
 	}
@@ -58,9 +58,9 @@ func main() {
 		btns[i] = btn
 	}
 
-	btnChangedCb := func(btnIndex int, state esd.BtnState) {
+	btnChangedCb := func(btnIndex int, state sd.BtnState) {
 		fmt.Printf("Button: %d, %s\n", btnIndex, state)
-		if state == esd.BtnPressed {
+		if state == sd.BtnPressed {
 			btn := btns[btnIndex]
 			btn.SetState(!btn.State())
 		}

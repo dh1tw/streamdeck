@@ -8,7 +8,7 @@ import (
 	"os/signal"
 	"time"
 
-	esd "github.com/dh1tw/go-elgato-stream-deck"
+	sd "github.com/dh1tw/streamdeck"
 	"github.com/gobuffalo/packr"
 )
 
@@ -18,7 +18,7 @@ import (
 
 func main() {
 
-	sd, err := esd.NewStreamDeck()
+	sd, err := sd.NewStreamDeck()
 	if err != nil {
 		log.Panic(err)
 	}
