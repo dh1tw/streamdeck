@@ -1,4 +1,4 @@
-package LedButton
+package ledbutton
 
 import "image"
 

@@ -6,8 +6,8 @@ import (
 	"os"
 	"os/signal"
 
-	sd "github.com/dh1tw/streamdeck"
-	ledBtn "github.com/dh1tw/streamdeck/LedButton"
+	sdeck "github.com/dh1tw/streamdeck"
+	ledBtn "github.com/dh1tw/streamdeck/ledbutton"
 )
 
 // This example shows how to use the 'streamdeck/LedButton‘. It will
@@ -16,7 +16,7 @@ import (
 
 func main() {
 
-	sdeck, err := sd.NewStreamDeck()
+	sd, err := sdeck.NewStreamDeck()
 	if err != nil {
 		log.Panic(err)
 	}
@@ -58,9 +58,9 @@ func main() {
 		btns[i] = btn
 	}
 
-	btnChangedCb := func(btnIndex int, state sd.BtnState) {
+	btnChangedCb := func(btnIndex int, state sdeck.BtnState) {
 		fmt.Printf("Button: %d, %s\n", btnIndex, state)
-		if state == sd.BtnPressed {
+		if state == sdeck.BtnPressed {
 			btn := btns[btnIndex]
 			btn.SetState(!btn.State())
 		}

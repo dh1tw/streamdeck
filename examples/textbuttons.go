@@ -6,7 +6,7 @@ import (
 	"os"
 	"os/signal"
 
-	sd "github.com/dh1tw/streamdeck"
+	sdeck "github.com/dh1tw/streamdeck"
 	"github.com/gobuffalo/packr"
 	"github.com/golang/freetype"
 	"github.com/golang/freetype/truetype"
@@ -26,7 +26,7 @@ func main() {
 		log.Panic(err)
 	}
 
-	lineLabel := sd.TextLine{
+	lineLabel := sdeck.TextLine{
 		Font:      monoFont,
 		FontColor: color.RGBA{255, 255, 0, 0}, // Yellow
 		FontSize:  22,
@@ -35,7 +35,7 @@ func main() {
 		Text:      "STATE",
 	}
 
-	linePressed := sd.TextLine{
+	linePressed := sdeck.TextLine{
 		Font:      monoFont,
 		FontColor: color.RGBA{255, 255, 255, 0}, // White
 		FontSize:  14,
@@ -44,7 +44,7 @@ func main() {
 		Text:      "PRESSED",
 	}
 
-	lineReleased := sd.TextLine{
+	lineReleased := sdeck.TextLine{
 		Font:      monoFont,
 		FontColor: color.RGBA{255, 0, 0, 0}, // Red
 		FontSize:  14,
@@ -53,17 +53,17 @@ func main() {
 		Text:      "RELEASED",
 	}
 
-	pressedText := sd.TextButton{
+	pressedText := sdeck.TextButton{
 		BgColor: color.RGBA{0, 0, 0, 0},
-		Lines:   []sd.TextLine{lineLabel, linePressed},
+		Lines:   []sdeck.TextLine{lineLabel, linePressed},
 	}
 
-	releasedText := sd.TextButton{
+	releasedText := sdeck.TextButton{
 		BgColor: color.RGBA{0, 0, 0, 0},
-		Lines:   []sd.TextLine{lineLabel, lineReleased},
+		Lines:   []sdeck.TextLine{lineLabel, lineReleased},
 	}
 
-	sdeck, err := sd.NewStreamDeck()
+	sd, err := sdeck.NewStreamDeck()
 	if err != nil {
 		log.Panic(err)
 	}
@@ -73,9 +73,9 @@ func main() {
 		sdeck.WriteText(i, releasedText)
 	}
 
-	btnEvtCb := func(btnIndex int, state sd.BtnState) {
-		if state == sd.BtnPressed {
-			sdeck.WriteText(btnIndex, pressedText)
+	btnEvtCb := func(btnIndex int, state sdeck.BtnState) {
+		if state == sdeck.BtnPressed {
+			sd.WriteText(btnIndex, pressedText)
 		} else {
 			sdeck.WriteText(btnIndex, releasedText)
 		}

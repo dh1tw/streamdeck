@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"time"
 
-	sd "github.com/dh1tw/streamdeck"
-	label "github.com/dh1tw/streamdeck/Label"
+	sdeck "github.com/dh1tw/streamdeck"
+	label "github.com/dh1tw/streamdeck/label"
 )
 
 // This example will instanciate 15 labels on the streamdeck. Each Label
@@ -20,7 +20,7 @@ import (
 
 func main() {
 
-	sdeck, err := sd.NewStreamDeck()
+	sd, err := sdeck.NewStreamDeck()
 	if err != nil {
 		log.Panic(err)
 	}
@@ -37,9 +37,9 @@ func main() {
 		labels[i] = label
 	}
 
-	handleBtnEvents := func(btnIndex int, state sd.BtnState) {
+	handleBtnEvents := func(btnIndex int, state sdeck.BtnState) {
 		fmt.Printf("Button: %d, %s\n", btnIndex, state)
-		if state == sd.BtnPressed {
+		if state == sdeck.BtnPressed {
 			col := color.RGBA{0, 0, 153, 0}
 			labels[btnIndex].SetBgColor(image.NewUniform(col))
 		} else { // must be BtnReleased
@@ -63,9 +63,7 @@ func main() {
 			return
 		case <-ticker.C:
 			for i := 0; i < 15; i++ {
-				if err := labels[i].SetText(fmt.Sprintf("%03d", counter)); err != nil {
-					log.Println(err)
-				}
+				labels[i].SetText(fmt.Sprintf("%03d", counter))
 			}
 			counter++
 		}

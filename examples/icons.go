@@ -8,7 +8,7 @@ import (
 	"os"
 	"os/signal"
 
-	sd "github.com/dh1tw/streamdeck"
+	sdeck "github.com/dh1tw/streamdeck"
 	"github.com/gobuffalo/packr"
 )
 
@@ -17,7 +17,7 @@ import (
 
 func main() {
 
-	sdeck, err := sd.NewStreamDeck()
+	sd, err := sdeck.NewStreamDeck()
 	if err != nil {
 		log.Panic(err)
 	}
@@ -72,9 +72,9 @@ func main() {
 
 	lightbulb := false
 
-	onPressedCb := func(btnIndex int, state sd.BtnState) {
+	onPressedCb := func(btnIndex int, state sdeck.BtnState) {
 		fmt.Printf("Button: %d, %s\n", btnIndex, state)
-		if btnIndex == 0 && state == sd.BtnPressed {
+		if btnIndex == 0 && state == sdeck.BtnPressed {
 			if lightbulb {
 				if err := sdeck.FillImage(0, lightbulbOff); err != nil {
 					log.Panic(err)

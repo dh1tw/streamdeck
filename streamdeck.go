@@ -97,16 +97,13 @@ type TextLine struct {
 	FontColor color.Color
 }
 
-type Icon struct {
-	image image.Image
-}
-
-type Page struct {
-	Elements map[int]StremDeckElement
-}
-
-type StremDeckElement interface {
-	Draw() image.Image
+// Page contains the configuration of one particular page of buttons. Pages
+// can be nested to an arbitrary depth.
+type Page interface {
+	Set(btnIndex int, state BtnState) Page
+	Parent() Page
+	Draw()
+	SetActive(bool)
 }
 
 // NewStreamDeck is the constructor of the StreamDeck object. If several StreamDecks

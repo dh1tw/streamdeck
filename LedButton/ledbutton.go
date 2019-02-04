@@ -1,5 +1,5 @@
 //go:generate stringer -type=LEDColor
-package LedButton
+package ledbutton
 
 import (
 	"bytes"
@@ -54,7 +54,8 @@ func init() {
 	var err error
 
 	// Load the font
-	font, err = freetype.ParseFont(fontBox.Bytes("mplus-1m-regular.ttf"))
+	font, err = freetype.ParseFont(fontBox.Bytes("mplus-1m-medium.ttf"))
+	// font, err = freetype.ParseFont(fontBox.Bytes("mplus-1m-regular.ttf"))
 	if err != nil {
 		log.Panic(err)
 	}
@@ -113,6 +114,13 @@ func (btn *LedButton) SetState(state bool) error {
 	return btn.Draw()
 }
 
+// Change
+func (btn *LedButton) Change(state sd.BtnState) {
+	if state == sd.BtnPressed {
+		btn.state = !btn.state
+	}
+}
+
 // Draw renders the Button
 func (btn *LedButton) Draw() error {
 
@@ -134,17 +142,17 @@ func (btn *LedButton) SetText(text string) error {
 func (btn *LedButton) addLED(color LEDColor, img *image.RGBA) {
 
 	if !btn.state {
-		draw.Draw(img, img.Bounds(), ledOff, image.Point{0, 0}, draw.Src)
+		draw.Draw(img, img.Bounds(), ledOff, image.ZP, draw.Src)
 		return
 	}
 
 	switch color {
 	case LEDRed:
-		draw.Draw(img, img.Bounds(), ledRed, image.Point{0, 0}, draw.Src)
+		draw.Draw(img, img.Bounds(), ledRed, image.ZP, draw.Src)
 	case LEDGreen:
-		draw.Draw(img, img.Bounds(), ledGreen, image.Point{0, 0}, draw.Src)
+		draw.Draw(img, img.Bounds(), ledGreen, image.ZP, draw.Src)
 	case LEDYellow:
-		draw.Draw(img, img.Bounds(), ledYellow, image.Point{0, 0}, draw.Src)
+		draw.Draw(img, img.Bounds(), ledYellow, image.ZP, draw.Src)
 	}
 
 }
@@ -156,39 +164,39 @@ type textParams struct {
 }
 
 var singleChar = textParams{
-	fontSize: 26,
+	fontSize: 32,
 	posX:     30,
-	posY:     27,
+	posY:     32,
 }
 
 var oneLineTwoChars = textParams{
-	fontSize: 26,
+	fontSize: 32,
 	posX:     23,
-	posY:     27,
+	posY:     32,
 }
 
 var oneLineThreeChars = textParams{
-	fontSize: 26,
+	fontSize: 32,
 	posX:     17,
-	posY:     27,
+	posY:     32,
 }
 
 var oneLineFourChars = textParams{
-	fontSize: 26,
+	fontSize: 32,
 	posX:     11,
-	posY:     27,
+	posY:     32,
 }
 
 var oneLineFiveChars = textParams{
-	fontSize: 26,
+	fontSize: 32,
 	posX:     5,
-	posY:     27,
+	posY:     32,
 }
 
 var oneLine = textParams{
-	fontSize: 26,
+	fontSize: 32,
 	posX:     0,
-	posY:     27,
+	posY:     32,
 }
 
 func (btn *LedButton) addText(text string, img *image.RGBA) error {

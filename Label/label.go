@@ -1,4 +1,4 @@
-package Label
+package label
 
 import (
 	"fmt"
@@ -20,6 +20,8 @@ type Label struct {
 	id         int
 	textColor  color.Color
 	bgColor    color.Color
+	state      sd.BtnState
+	cb         func(int, sd.BtnState)
 }
 
 var font *truetype.Font
@@ -32,7 +34,9 @@ func init() {
 	var err error
 
 	// Load the font
-	font, err = freetype.ParseFont(fontBox.Bytes("mplus-1m-regular.ttf"))
+	// font, err = freetype.ParseFont(fontBox.Bytes("mplus-1m-regular.ttf"))
+	font, err = freetype.ParseFont(fontBox.Bytes("mplus-1m-medium.ttf"))
+	// font, err = freetype.ParseFont(fontBox.Bytes("mplus-1mn-regular.ttf"))
 	if err != nil {
 		log.Panic(err)
 	}
@@ -56,6 +60,19 @@ func NewLabel(sd *sd.StreamDeck, btnIndex int, options ...func(*Label)) (*Label,
 	return l, nil
 }
 
+func (l *Label) Change(state sd.BtnState) {
+	if state == sd.BtnPressed {
+		col := color.RGBA{0, 0, 153, 0}
+		l.SetBgColor(image.NewUniform(col))
+	} else { // must be BtnReleased
+		col := color.RGBA{0, 0, 0, 255}
+		l.SetBgColor(image.NewUniform(col))
+	}
+	if l.cb != nil {
+		l.cb(l.id, state)
+	}
+}
+
 // Draw renders the Label on the designated Button.
 func (l *Label) Draw() error {
 	img := image.NewRGBA(image.Rect(0, 0, sd.ButtonSize, sd.ButtonSize))
@@ -67,15 +84,13 @@ func (l *Label) Draw() error {
 }
 
 // SetText sets the text of the Label.
-func (l *Label) SetText(text string) error {
+func (l *Label) SetText(text string) {
 	l.text = text
-	return l.Draw()
 }
 
 // SetBgColor sets the background color of the Label.
-func (l *Label) SetBgColor(color *image.Uniform) error {
+func (l *Label) SetBgColor(color *image.Uniform) {
 	l.bgColor = color
-	return l.Draw()
 }
 
 func (l *Label) addBgColor(col color.Color, img *image.RGBA) {
@@ -89,31 +104,31 @@ type textParams struct {
 }
 
 var singleChar = textParams{
-	fontSize: 26,
+	fontSize: 32,
 	posX:     30,
 	posY:     20,
 }
 
 var oneLineTwoChars = textParams{
-	fontSize: 26,
+	fontSize: 32,
 	posX:     23,
 	posY:     20,
 }
 
 var oneLineThreeChars = textParams{
-	fontSize: 26,
+	fontSize: 32,
 	posX:     17,
 	posY:     20,
 }
 
 var oneLineFourChars = textParams{
-	fontSize: 26,
-	posX:     11,
+	fontSize: 32,
+	posX:     5,
 	posY:     20,
 }
 
 var oneLineFiveChars = textParams{
-	fontSize: 26,
+	fontSize: 32,
 	posX:     5,
 	posY:     20,
 }

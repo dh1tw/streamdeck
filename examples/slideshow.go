@@ -8,7 +8,7 @@ import (
 	"os/signal"
 	"time"
 
-	sd "github.com/dh1tw/streamdeck"
+	sdeck "github.com/dh1tw/streamdeck"
 	"github.com/gobuffalo/packr"
 )
 
@@ -18,7 +18,7 @@ import (
 
 func main() {
 
-	sd, err := sd.NewStreamDeck()
+	sd, err := sdeck.NewStreamDeck()
 	if err != nil {
 		log.Panic(err)
 	}
