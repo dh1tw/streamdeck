@@ -38,6 +38,25 @@ go-elgato-stream-deck works well on SoC boards like the Raspberry / Orange / Ban
 $ go get github.com/dh1tw/go-elgato-stream-deck
 ````
 
+On Linux you might have to create an udev rule, to access the streamdeck.
+
+````
+sudo vim /etc/udev/rules.d/99-streamdeck.rules
+
+SUBSYSTEM=="usb", ATTRS{idVendor}=="0fd9", ATTRS{idProduct}=="0060", MODE="0664", GROUP="plugdev"
+````
+
+After saving the udev rule, unplug and plug the streamdeck again into the USB port.
+
+Make sure that your streamdeck is correctly recognized
+by executing:
+
+````bash
+$ go run examples/enumerate.go
+Found 1 Elgato Stream Deck(s):
+	SerialNumber:        AL12H1A07123
+````
+
 ## Documentation
 
 The auto generated documentation can be found at [godoc.org](https://godoc.org/github.com/dh1tw/go-elgato-stream-deck)
