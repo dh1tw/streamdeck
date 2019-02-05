@@ -221,12 +221,13 @@ func (sp *rotatorPage) Set(btnIndex int, state sdeck.BtnState) sdeck.Page {
 
 	_, ok := sp.numPad[btnIndex]
 	if ok {
-		if len(sp.newPosText) > 3 {
+		if len(sp.newPosText) > 2 {
 			return nil
 		}
 		num := sp.keyPadMapping[btnIndex]
 		sp.newPosText = sp.newPosText + strconv.Itoa(num)
 		sp.newPos.SetText(sp.newPosText)
+		sp.Draw()
 	}
 
 	return nil
