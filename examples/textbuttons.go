@@ -67,21 +67,21 @@ func main() {
 	if err != nil {
 		log.Panic(err)
 	}
-	defer sdeck.ClearAllBtns()
+	defer sd.ClearAllBtns()
 
 	for i := 0; i < 15; i++ {
-		sdeck.WriteText(i, releasedText)
+		sd.WriteText(i, releasedText)
 	}
 
 	btnEvtCb := func(btnIndex int, state sdeck.BtnState) {
 		if state == sdeck.BtnPressed {
 			sd.WriteText(btnIndex, pressedText)
 		} else {
-			sdeck.WriteText(btnIndex, releasedText)
+			sd.WriteText(btnIndex, releasedText)
 		}
 	}
 
-	sdeck.SetBtnEventCb(btnEvtCb)
+	sd.SetBtnEventCb(btnEvtCb)
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)

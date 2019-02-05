@@ -21,7 +21,7 @@ func main() {
 	if err != nil {
 		log.Panic(err)
 	}
-	defer sdeck.ClearAllBtns()
+	defer sd.ClearAllBtns()
 
 	imgBox := packr.NewBox("images")
 
@@ -54,19 +54,19 @@ func main() {
 		log.Panic(err)
 	}
 
-	if err := sdeck.FillImage(4, warning); err != nil {
+	if err := sd.FillImage(4, warning); err != nil {
 		log.Panic(err)
 	}
-	if err := sdeck.FillImage(3, doctor); err != nil {
+	if err := sd.FillImage(3, doctor); err != nil {
 		log.Panic(err)
 	}
-	if err := sdeck.FillImage(2, tux); err != nil {
+	if err := sd.FillImage(2, tux); err != nil {
 		log.Panic(err)
 	}
-	if err := sdeck.FillImage(1, user); err != nil {
+	if err := sd.FillImage(1, user); err != nil {
 		log.Panic(err)
 	}
-	if err := sdeck.FillImage(0, lightbulbOff); err != nil {
+	if err := sd.FillImage(0, lightbulbOff); err != nil {
 		log.Panic(err)
 	}
 
@@ -76,12 +76,12 @@ func main() {
 		fmt.Printf("Button: %d, %s\n", btnIndex, state)
 		if btnIndex == 0 && state == sdeck.BtnPressed {
 			if lightbulb {
-				if err := sdeck.FillImage(0, lightbulbOff); err != nil {
+				if err := sd.FillImage(0, lightbulbOff); err != nil {
 					log.Panic(err)
 				}
 				lightbulb = false
 			} else {
-				if err := sdeck.FillImage(0, lightbulbOn); err != nil {
+				if err := sd.FillImage(0, lightbulbOn); err != nil {
 					log.Panic(err)
 				}
 				lightbulb = true
@@ -89,7 +89,7 @@ func main() {
 		}
 	}
 
-	sdeck.SetBtnEventCb(onPressedCb)
+	sd.SetBtnEventCb(onPressedCb)
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)

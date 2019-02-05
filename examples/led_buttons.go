@@ -21,14 +21,14 @@ func main() {
 		log.Panic(err)
 	}
 
-	defer sdeck.ClearAllBtns()
+	defer sd.ClearAllBtns()
 
 	btns := make(map[int]*ledBtn.LedButton)
 
 	// Red Buttons
 	for i := 0; i < 5; i++ {
 		text := fmt.Sprintf("%03d", i)
-		btn, err := ledBtn.NewLedButton(sdeck, i, ledBtn.Text(text), ledBtn.LedColor(ledBtn.LEDRed))
+		btn, err := ledBtn.NewLedButton(sd, i, ledBtn.Text(text), ledBtn.LedColor(ledBtn.LEDRed))
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -39,7 +39,7 @@ func main() {
 	// Yellow Buttons
 	for i := 5; i < 10; i++ {
 		text := fmt.Sprintf("%03d", i)
-		btn, err := ledBtn.NewLedButton(sdeck, i, ledBtn.Text(text), ledBtn.LedColor(ledBtn.LEDYellow))
+		btn, err := ledBtn.NewLedButton(sd, i, ledBtn.Text(text), ledBtn.LedColor(ledBtn.LEDYellow))
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -50,7 +50,7 @@ func main() {
 	// Green Buttons
 	for i := 10; i < 15; i++ {
 		text := fmt.Sprintf("%03d", i)
-		btn, err := ledBtn.NewLedButton(sdeck, i, ledBtn.Text(text), ledBtn.LedColor(ledBtn.LEDGreen))
+		btn, err := ledBtn.NewLedButton(sd, i, ledBtn.Text(text), ledBtn.LedColor(ledBtn.LEDGreen))
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -65,7 +65,7 @@ func main() {
 			btn.SetState(!btn.State())
 		}
 	}
-	sdeck.SetBtnEventCb(btnChangedCb)
+	sd.SetBtnEventCb(btnChangedCb)
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)

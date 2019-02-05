@@ -24,12 +24,12 @@ func main() {
 	if err != nil {
 		log.Panic(err)
 	}
-	defer sdeck.ClearAllBtns()
+	defer sd.ClearAllBtns()
 
 	labels := make(map[int]*label.Label)
 
 	for i := 0; i < 15; i++ {
-		label, err := label.NewLabel(sdeck, i, label.Text(strconv.Itoa(i)))
+		label, err := label.NewLabel(sd, i, label.Text(strconv.Itoa(i)))
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -48,7 +48,7 @@ func main() {
 		}
 	}
 
-	sdeck.SetBtnEventCb(handleBtnEvents)
+	sd.SetBtnEventCb(handleBtnEvents)
 
 	ticker := time.NewTicker(time.Millisecond * 50)
 
