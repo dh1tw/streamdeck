@@ -11,7 +11,7 @@ import (
 	"time"
 
 	sdeck "github.com/dh1tw/streamdeck"
-	label "github.com/dh1tw/streamdeck/label"
+	"github.com/dh1tw/streamdeck/label"
 )
 
 // This example will instanciate 15 labels on the streamdeck. Each Label
