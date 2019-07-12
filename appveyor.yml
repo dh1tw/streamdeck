@@ -43,8 +43,8 @@ build_script:
   - go build examples/slideshow.go
   - go build examples/textbuttons.go
   - dir
-  - 7z a -tzip streamdeck-v$APPVEYOR_REPO_TAG_NAME-$GOOS-$GOARCH.zip *.exe
+  - 7z a -tzip streamdeck-examples-v$APPVEYOR_REPO_TAG_NAME-$GOOS-$GOARCH.zip *.exe
 
 artifacts:
-  - path: streamdeck-v$APPVEYOR_REPO_TAG_NAME-$GOOS-$GOARCH.zip
+  - path: streamdeck-examples-v$APPVEYOR_REPO_TAG_NAME-$GOOS-$GOARCH.zip
     name: streamdeck
