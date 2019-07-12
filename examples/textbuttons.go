@@ -7,7 +7,7 @@ import (
 	"os/signal"
 
 	sdeck "github.com/dh1tw/streamdeck"
-	"github.com/gobuffalo/packr"
+	"github.com/gobuffalo/packr/v2"
 	"github.com/golang/freetype"
 	"github.com/golang/freetype/truetype"
 )
@@ -16,11 +16,15 @@ var monoFont *truetype.Font
 
 func main() {
 
-	fontBox := packr.NewBox("fonts")
+	fontBox := packr.New("textbtn-box", "fonts")
 
 	var err error
 
 	// Load the font
+	_monoFont, err := fontBox.Find("mplus-1m-regular.ttf")
+	if err != nil {
+		log.Fatal(err)
+	}
 	monoFont, err = freetype.ParseFont(fontBox.Bytes("mplus-1m-regular.ttf"))
 	if err != nil {
 		log.Panic(err)

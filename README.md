@@ -27,6 +27,9 @@ streamdeck is published under the permissive [MIT license](https://github.com/dh
 There are a few go libraries which are needed at compile time. streamdeck
 does not have any runtime dependencies.
 
+However compiling this library requires a c compiler since the underlying [HID library](github.com/karalabe/hid) requires cgo for enumerating the
+HID devices.
+
 ## Supported Operating Systems
 
 In principal the library should work on Linux, MacOS and Windows (>=7).
@@ -38,6 +41,18 @@ streamdeck works well on SoC boards like the Raspberry / Orange / Banana Pis.
 ````bash
 $ go get github.com/dh1tw/streamdeck
 ````
+
+By default the images and fonts are not included in the binary. If you
+would like to do so, you can execute:
+
+````
+$ go get github.com/gobuffalo/packr/v2/packr2
+$ cd $GOPATH/src/github.com/dh1tw/streamdeck
+$ packr2
+````
+
+[Packr2](github.com/gobuffalo/packr/v2/packr2) will compile all the static
+assets into go file while will then be included when you execute `go build`.
 
 On Linux you might have to create an udev rule, to access the streamdeck.
 

@@ -8,7 +8,7 @@ import (
 	"log"
 
 	sd "github.com/dh1tw/streamdeck"
-	"github.com/gobuffalo/packr"
+	"github.com/gobuffalo/packr/v2"
 	"github.com/golang/freetype"
 	"github.com/golang/freetype/truetype"
 )
@@ -29,13 +29,17 @@ var font *truetype.Font
 // in order to avoid the repetitive loading of the font, we load it once
 // during initalization into memory
 func init() {
-	fontBox := packr.NewBox("./fonts")
+	fontBox := packr.New("label-fonts", "./fonts")
 
 	var err error
 
 	// Load the font
 	// font, err = freetype.ParseFont(fontBox.Bytes("mplus-1m-regular.ttf"))
-	font, err = freetype.ParseFont(fontBox.Bytes("mplus-1m-medium.ttf"))
+	f, err := fontBox.Find("mplus-1m-medium.ttf")
+	if err != nil {
+		log.Panic(err)
+	}
+	font, err = freetype.ParseFont(f)
 	// font, err = freetype.ParseFont(fontBox.Bytes("mplus-1mn-regular.ttf"))
 	if err != nil {
 		log.Panic(err)

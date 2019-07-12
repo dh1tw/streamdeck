@@ -8,7 +8,7 @@ import (
 	"image/draw"
 	"log"
 
-	"github.com/gobuffalo/packr"
+	"github.com/gobuffalo/packr/v2"
 
 	sd "github.com/dh1tw/streamdeck"
 	"github.com/golang/freetype"
@@ -48,32 +48,53 @@ var font *truetype.Font
 // in order to avoid the repetitive loading of the font and the LED pictures,
 // we load them during initalization into memory
 func init() {
-	fontBox := packr.NewBox("./fonts")
-	imgBox := packr.NewBox("./images")
+	fontBox := packr.New("ledbtn-fonts", "./fonts")
+	imgBox := packr.New("ledbtn-images", "./images")
 
 	var err error
 
+	f, err := fontBox.Find("mplus-1m-medium.ttf")
+	if err != nil {
+		log.Panic(err)
+	}
 	// Load the font
-	font, err = freetype.ParseFont(fontBox.Bytes("mplus-1m-medium.ttf"))
+	font, err = freetype.ParseFont(f)
 	// font, err = freetype.ParseFont(fontBox.Bytes("mplus-1m-regular.ttf"))
 	if err != nil {
 		log.Panic(err)
 	}
 
 	// Load the LED images
-	ledOff, _, err = image.Decode(bytes.NewBuffer(imgBox.Bytes("led_off.png")))
+	_ledOff, err := imgBox.Find("led_off.png")
 	if err != nil {
 		log.Panic(err)
 	}
-	ledGreen, _, err = image.Decode(bytes.NewBuffer(imgBox.Bytes("led_green_on.png")))
+	ledOff, _, err = image.Decode(bytes.NewBuffer(_ledOff))
 	if err != nil {
 		log.Panic(err)
 	}
-	ledYellow, _, err = image.Decode(bytes.NewBuffer(imgBox.Bytes("led_yellow_on.png")))
+	_ledGreen, err := imgBox.Find("led_green_on.png")
 	if err != nil {
 		log.Panic(err)
 	}
-	ledRed, _, err = image.Decode(bytes.NewBuffer(imgBox.Bytes("led_red_on.png")))
+	ledGreen, _, err = image.Decode(bytes.NewBuffer(_ledGreen))
+	if err != nil {
+		log.Panic(err)
+	}
+	_ledYellow, err := imgBox.Find("led_yellow_on.png")
+	if err != nil {
+		log.Panic(err)
+	}
+	ledYellow, _, err = image.Decode(bytes.NewBuffer(_ledYellow))
+	if err != nil {
+		log.Panic(err)
+	}
+
+	_ledRed, err := imgBox.Find("led_red_on.png")
+	if err != nil {
+		log.Panic(err)
+	}
+	ledRed, _, err = image.Decode(bytes.NewBuffer(_ledRed))
 	if err != nil {
 		log.Panic(err)
 	}

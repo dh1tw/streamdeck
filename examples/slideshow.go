@@ -9,7 +9,7 @@ import (
 	"time"
 
 	sdeck "github.com/dh1tw/streamdeck"
-	"github.com/gobuffalo/packr"
+	"github.com/gobuffalo/packr/v2"
 )
 
 // This example creates a slideshow on the Stream Deck, across all buttons.
@@ -24,19 +24,31 @@ func main() {
 	}
 	defer sd.ClearAllBtns()
 
-	imgBox := packr.NewBox("images")
+	imgBox := packr.New("slideshow-images", "./images")
 
-	dices, _, err := image.Decode(bytes.NewBuffer(imgBox.Bytes("dices.png")))
+	_dices, err := imgBox.Find("dices.png")
+	if err != nil {
+		log.Fatal(err)
+	}
+	dices, _, err := image.Decode(bytes.NewBuffer(_dices))
 	if err != nil {
 		log.Panic(err)
 	}
 
-	dna, _, err := image.Decode(bytes.NewBuffer(imgBox.Bytes("dna.gif")))
+	_dna, err := imgBox.Find("dna.png")
+	if err != nil {
+		log.Fatal(err)
+	}
+	dna, _, err := image.Decode(bytes.NewBuffer(_dna))
 	if err != nil {
 		log.Panic(err)
 	}
 
-	octocat, _, err := image.Decode(bytes.NewBuffer(imgBox.Bytes("Octocat.jpg")))
+	_octocat, err := imgBox.Find("octocat.png")
+	if err != nil {
+		log.Fatal(err)
+	}
+	octocat, _, err := image.Decode(bytes.NewBuffer(_octocat))
 	if err != nil {
 		log.Panic(err)
 	}
