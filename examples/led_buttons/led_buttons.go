@@ -7,7 +7,7 @@ import (
 	"os/signal"
 
 	sdeck "github.com/dh1tw/streamdeck"
-	ledbtn "github.com/dh1tw/streamdeck/ledbutton"
+	"github.com/dh1tw/streamdeck/ledbutton"
 )
 
 // This example shows how to use the 'streamdeck/LedButton‘. It will
@@ -23,12 +23,12 @@ func main() {
 
 	defer sd.ClearAllBtns()
 
-	btns := make(map[int]*ledbtn.LedButton)
+	btns := make(map[int]*ledbutton.LedButton)
 
 	// Red Buttons
 	for i := 0; i < 5; i++ {
 		text := fmt.Sprintf("%03d", i)
-		btn, err := ledbtn.NewLedButton(sd, i, ledbtn.Text(text), ledbtn.LedColor(ledbtn.LEDRed))
+		btn, err := ledbutton.NewLedButton(sd, i, ledbutton.Text(text), ledbutton.LedColor(ledbutton.LEDRed))
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -39,7 +39,7 @@ func main() {
 	// Yellow Buttons
 	for i := 5; i < 10; i++ {
 		text := fmt.Sprintf("%03d", i)
-		btn, err := ledbtn.NewLedButton(sd, i, ledbtn.Text(text), ledbtn.LedColor(ledbtn.LEDYellow))
+		btn, err := ledbutton.NewLedButton(sd, i, ledbutton.Text(text), ledbutton.LedColor(ledbutton.LEDYellow))
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -50,7 +50,7 @@ func main() {
 	// Green Buttons
 	for i := 10; i < 15; i++ {
 		text := fmt.Sprintf("%03d", i)
-		btn, err := ledbtn.NewLedButton(sd, i, ledbtn.Text(text), ledbtn.LedColor(ledbtn.LEDGreen))
+		btn, err := ledbutton.NewLedButton(sd, i, ledbutton.Text(text), ledbutton.LedColor(ledbutton.LEDGreen))
 		if err != nil {
 			fmt.Println(err)
 		}
