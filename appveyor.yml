@@ -35,13 +35,13 @@ build_script:
   - set PATH=%PATH%;C:\gopath\bin
   - packr2
   - dir
-  - go build examples/enumerate.go
-  - go build examples/icons.go
-  - go build examples/labels.go
-  - go build examples/led_buttons.go
-  - go build examples/pages.go
-  - go build examples/slideshow.go
-  - go build examples/textbuttons.go
+  - go build ./examples/enumerate
+  - go build ./examples/icons
+  - go build ./examples/labels
+  - go build ./examples/led_buttons
+  - go build ./examples/pages
+  - go build ./examples/slideshow
+  - go build ./examples/textbuttons
   - dir
   - 7z a -tzip streamdeck-examples-v$APPVEYOR_REPO_TAG_NAME-$GOOS-$GOARCH.zip *.exe
 
