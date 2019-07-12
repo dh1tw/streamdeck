@@ -16,7 +16,7 @@ var monoFont *truetype.Font
 
 func main() {
 
-	fontBox := packr.New("textbtn-box", "fonts")
+	fontBox := packr.New("textbtn-box", "../assets/fonts")
 
 	var err error
 
@@ -25,7 +25,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	monoFont, err = freetype.ParseFont(fontBox.Bytes("mplus-1m-regular.ttf"))
+	monoFont, err = freetype.ParseFont(_monoFont)
 	if err != nil {
 		log.Panic(err)
 	}
