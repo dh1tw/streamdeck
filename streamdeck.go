@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"image"
 	"os"
+	"sync"
 
 	"github.com/disintegration/gift"
 	"github.com/golang/freetype"
@@ -75,6 +76,7 @@ type ReadErrorCb func(err error)
 
 // StreamDeck is the object representing the Elgato Stream Deck.
 type StreamDeck struct {
+	sync.Mutex
 	device     *hid.Device
 	btnEventCb BtnEvent
 	btnState   []BtnState
@@ -162,6 +164,8 @@ func NewStreamDeck(serial ...string) (*StreamDeck, error) {
 // SetBtnEventCb sets the BtnEvent callback which get's executed whenever
 // a Button event (pressed/released) occures.
 func (sd *StreamDeck) SetBtnEventCb(ev BtnEvent) {
+	sd.Lock()
+	defer sd.Unlock()
 	sd.btnEventCb = ev
 }
 
@@ -178,21 +182,26 @@ func (sd *StreamDeck) read() {
 
 		data = data[1:] // strip off the first byte; usage unknown, but it is always '\x01'
 
+		sd.Lock()
 		// we have to iterate over all 15 buttons and check if the state
 		// has changed. If it has changed, execute the callback.
 		for i, b := range data {
 			if sd.btnState[i] != itob(int(b)) {
 				sd.btnState[i] = itob(int(b))
 				if sd.btnEventCb != nil {
-					go sd.btnEventCb(i, sd.btnState[i])
+					btnState := sd.btnState[i]
+					go sd.btnEventCb(i, btnState)
 				}
 			}
 		}
+		sd.Unlock()
 	}
 }
 
 // Close the connection to the Elgato Stream Deck
 func (sd *StreamDeck) Close() error {
+	sd.Lock()
+	sd.Unlock()
 	return sd.Close()
 }
 
@@ -258,8 +267,10 @@ func (sd *StreamDeck) FillImage(btnIndex int, img image.Image) error {
 	page1 := imgBuf[0 : numFirstMsgPixels*3]
 	page2 := imgBuf[numFirstMsgPixels*3:]
 
+	sd.Lock()
 	sd.writeMsg1(btnIndex, page1)
 	sd.writeMsg2(btnIndex, page2)
+	sd.Unlock()
 
 	return nil
 }
