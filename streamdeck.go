@@ -11,7 +11,7 @@ import (
 	"github.com/golang/freetype"
 	"github.com/golang/freetype/truetype"
 
-	"github.com/karalabe/hid"
+	"github.com/dh1tw/hid"
 
 	"image/color"
 	"image/draw"
