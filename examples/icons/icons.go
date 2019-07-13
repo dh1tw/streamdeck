@@ -23,7 +23,7 @@ func main() {
 	}
 	defer sd.ClearAllBtns()
 
-	imgBox := packr.New("icons-images", "./images")
+	imgBox := packr.New("icons-images", "../assets/images")
 
 	_user, err := imgBox.Find("user.png")
 	if err != nil {

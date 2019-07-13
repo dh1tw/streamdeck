@@ -8,8 +8,8 @@ import (
 	"strconv"
 
 	sdeck "github.com/dh1tw/streamdeck"
-	label "github.com/dh1tw/streamdeck/label"
-	ledbtn "github.com/dh1tw/streamdeck/ledbutton"
+	"github.com/dh1tw/streamdeck/label"
+	ledbutton "github.com/dh1tw/streamdeck/ledbutton"
 )
 
 func main() {
@@ -43,7 +43,7 @@ func main() {
 type stackPage struct {
 	sd         *sdeck.StreamDeck
 	parent     sdeck.Page
-	btns       map[int]*ledbtn.LedButton
+	btns       map[int]*ledbutton.LedButton
 	rotators   map[int]*label.Label
 	stackState map[int]bool
 }
@@ -53,7 +53,7 @@ func NewStackPage(sd *sdeck.StreamDeck, parent sdeck.Page) sdeck.Page {
 	sp := &stackPage{
 		sd:         sd,
 		parent:     parent,
-		btns:       make(map[int]*ledbtn.LedButton, 0),
+		btns:       make(map[int]*ledbutton.LedButton, 0),
 		rotators:   make(map[int]*label.Label, 0),
 		stackState: make(map[int]bool),
 	}
@@ -65,9 +65,9 @@ func NewStackPage(sd *sdeck.StreamDeck, parent sdeck.Page) sdeck.Page {
 	}
 
 	for pos, txt := range smBtns {
-		led, err := ledbtn.NewLedButton(sd, pos,
-			ledbtn.LedColor(ledbtn.LEDGreen),
-			ledbtn.Text(txt))
+		led, err := ledbutton.NewLedButton(sd, pos,
+			ledbutton.LedColor(ledbutton.LEDGreen),
+			ledbutton.Text(txt))
 		if err != nil {
 			log.Panic(err)
 		}

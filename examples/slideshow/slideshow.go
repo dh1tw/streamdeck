@@ -24,7 +24,7 @@ func main() {
 	}
 	defer sd.ClearAllBtns()
 
-	imgBox := packr.New("slideshow-images", "./images")
+	imgBox := packr.New("slideshow-images", "../assets/images")
 
 	_dices, err := imgBox.Find("dices.png")
 	if err != nil {
@@ -35,7 +35,7 @@ func main() {
 		log.Panic(err)
 	}
 
-	_dna, err := imgBox.Find("dna.png")
+	_dna, err := imgBox.Find("dna.gif")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -44,7 +44,7 @@ func main() {
 		log.Panic(err)
 	}
 
-	_octocat, err := imgBox.Find("octocat.png")
+	_octocat, err := imgBox.Find("octocat.jpg")
 	if err != nil {
 		log.Fatal(err)
 	}
