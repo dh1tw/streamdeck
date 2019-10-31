@@ -27,7 +27,9 @@ streamdeck is published under the permissive [MIT license](https://github.com/dh
 There are a few go libraries which are needed at compile time. streamdeck
 does not have any runtime dependencies.
 
-However compiling this library requires a c compiler since the underlying [HID library](github.com/karalabe/hid) requires cgo for enumerating the
+## CGO
+
+Compiling this library requires unfortunately a C compiler since the underlying [HID library](github.com/karalabe/hid) requires cgo for enumerating the
 HID devices.
 
 ## Supported Operating Systems
@@ -54,6 +56,8 @@ $ packr2
 [Packr2](github.com/gobuffalo/packr/v2/packr2) will compile all the static
 assets into go file while will then be included when you execute `go build`.
 
+### Linux Device rules
+
 On Linux you might have to create an udev rule, to access the streamdeck.
 
 ````
@@ -69,7 +73,7 @@ Make sure that your streamdeck is correctly recognized
 by executing:
 
 ````bash
-$ go run examples/enumerate.go
+$ go run examples/enumerate/enumerate.go
 Found 1 Elgato Stream Deck(s):
 	SerialNumber:        AL12H1A07123
 ````
@@ -83,8 +87,8 @@ The auto generated documentation can be found at [godoc.org](https://godoc.org/g
 There are a couple of examples located in the `examples` folder.
 
 ````bash
-$ go run examples/led_buttons.go
-$ go run examples/slideshow.go
+$ go run examples/led_buttons/led_buttons.go
+$ go run examples/slideshow/slideshow.go
 ...
 ````
 
