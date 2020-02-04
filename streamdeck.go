@@ -334,6 +334,22 @@ func (sd *StreamDeck) FillGif(btnIndex int, gif gif.GIF) error {
 	return nil
 }
 
+// FillGifFromFile fills the given key with an gif from a file.
+func (sd *StreamDeck) FillGifFromFile(keyIndex int, path string) error {
+	inputFile, err := os.Open(path)
+	defer inputFile.Close()
+	if err != nil {
+		panic(err)
+	}
+
+	gif, err := gif.DecodeAll(inputFile)
+	if err != nil {
+		return err
+	}
+
+	return sd.FillGif(keyIndex, *gif)
+}
+
 // GifEntry holds the cached content of a gif file. We cache this content to increase performance
 type GifEntry struct {
 	index int
