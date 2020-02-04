@@ -218,6 +218,11 @@ func (sd *StreamDeck) ClearBtn(btnIndex int) error {
 
 // ClearAllBtns fills all keys with the color black
 func (sd *StreamDeck) ClearAllBtns() {
+	for i, channel := range activeGifs {
+		channel <- true
+		delete(activeGifs, i)
+	}
+
 	for i := 14; i >= 0; i-- {
 		sd.ClearBtn(i)
 	}
@@ -296,7 +301,15 @@ func (sd *StreamDeck) FillImageFromFile(keyIndex int, path string) error {
 // FillGif fills the given key with an gif. For best performance, provide
 // the gif in the size of 72x72 pixels. Otherwise each frame will be automatically
 // resized.
+var activeGifs = make(map[int]chan bool)
+
 func (sd *StreamDeck) FillGif(btnIndex int, gif gif.GIF) error {
+	// Signal to kill the current go rendering loop for this button
+	if activeGif, exists := activeGifs[btnIndex]; exists {
+		activeGif <- true
+		delete(activeGifs, btnIndex)
+	}
+
 	if err := checkValidKeyIndex(btnIndex); err != nil {
 		return err
 	}
@@ -329,7 +342,33 @@ func (sd *StreamDeck) FillGif(btnIndex int, gif gif.GIF) error {
 		gifEntry.page2[index] = imgBuf[numFirstMsgPixels*3:]
 	}
 
-	go sd.loopGif(gifEntry)
+	channel := make(chan bool)
+
+	go func() {
+		page := 0
+
+		for {
+			select {
+			case <-channel:
+				return
+			default:
+				sd.Lock()
+				sd.writeMsg1(gifEntry.index, gifEntry.page1[page])
+				sd.writeMsg2(gifEntry.index, gifEntry.page2[page])
+				sd.Unlock()
+
+				time.Sleep(time.Duration(gifEntry.Delay[page]*10) * time.Millisecond)
+
+				page++
+
+				if page >= len(gifEntry.Delay) {
+					page = 0
+				}
+			}
+		}
+	}()
+
+	activeGifs[btnIndex] = channel
 
 	return nil
 }
