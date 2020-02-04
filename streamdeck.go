@@ -5,8 +5,10 @@ package StreamDeck
 import (
 	"fmt"
 	"image"
+	"image/gif"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/disintegration/gift"
 	"github.com/golang/freetype"
@@ -291,7 +293,76 @@ func (sd *StreamDeck) FillImageFromFile(keyIndex int, path string) error {
 	return sd.FillImage(keyIndex, img)
 }
 
-// FillPanel fills the whole panel witn an image. The image is scaled to fit
+// FillGif fills the given key with an gif. For best performance, provide
+// the gif in the size of 72x72 pixels. Otherwise each frame will be automatically
+// resized.
+func (sd *StreamDeck) FillGif(btnIndex int, gif gif.GIF) error {
+	if err := checkValidKeyIndex(btnIndex); err != nil {
+		return err
+	}
+
+	gifEntry := GifEntry{
+		index: btnIndex,
+		Delay: gif.Delay,
+		page1: make([][]byte, len(gif.Delay)),
+		page2: make([][]byte, len(gif.Delay)),
+	}
+
+	for index, i := range gif.Image {
+		rect := i.Bounds()
+		img := i.SubImage(rect)
+
+		if rect.Dx() != ButtonSize {
+			img = resize(img, ButtonSize, ButtonSize)
+		}
+
+		imgBuf := make([]byte, 0, ButtonSize*ButtonSize*3)
+
+		for row := 0; row < ButtonSize; row++ {
+			for line := ButtonSize - 1; line >= 0; line-- {
+				r, g, b, _ := img.At(line, row).RGBA()
+				imgBuf = append(imgBuf, byte(r), byte(b), byte(g))
+			}
+		}
+
+		gifEntry.page1[index] = imgBuf[0 : numFirstMsgPixels*3]
+		gifEntry.page2[index] = imgBuf[numFirstMsgPixels*3:]
+	}
+
+	go sd.loopGif(gifEntry)
+
+	return nil
+}
+
+// GifEntry holds the cached content of a gif file. We cache this content to increase performance
+type GifEntry struct {
+	index int
+	page1 [][]byte
+	page2 [][]byte
+	Delay []int
+}
+
+// loopGif will continuously loop through the gif provided
+func (sd *StreamDeck) loopGif(gif GifEntry) {
+	page := 0
+
+	for {
+		sd.Lock()
+		sd.writeMsg1(gif.index, gif.page1[page])
+		sd.writeMsg2(gif.index, gif.page2[page])
+		sd.Unlock()
+
+		time.Sleep(time.Duration(gif.Delay[page]*10) * time.Millisecond)
+
+		page++
+
+		if page >= len(gif.Delay) {
+			page = 0
+		}
+	}
+}
+
+// FillPanel fills the whole panel with an image. The image is scaled to fit
 // and then center-cropped (if necessary). The native picture size is 360px x 216px.
 func (sd *StreamDeck) FillPanel(img image.Image) error {
 
