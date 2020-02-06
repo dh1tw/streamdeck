@@ -202,7 +202,7 @@ func (sd *StreamDeck) read() {
 func (sd *StreamDeck) Close() error {
 	sd.Lock()
 	sd.Unlock()
-	return sd.Close()
+	return sd.device.Close()
 }
 
 // ClearBtn fills a particular key with the color black
