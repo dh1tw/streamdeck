@@ -57,7 +57,7 @@ const PanelWidth = NumButtonColumns*ButtonSize + Spacer*(NumButtonColumns-1)
 const PanelHeight = NumButtonRows*ButtonSize + Spacer*(NumButtonRows-1)
 
 // BtnEvent is a callback which gets executed when the state of a button changes,
-// so whenever it get's pressed or released.
+// so whenever it gets pressed or released.
 type BtnEvent func(btnIndex int, newBtnState BtnState)
 
 // BtnState is a type representing the button state.
@@ -170,7 +170,7 @@ func (sd *StreamDeck) SetBtnEventCb(ev BtnEvent) {
 }
 
 // Read will listen in a for loop for incoming messages from the Stream Deck.
-// It is typcially executed in a dedicated go routine.
+// It is typically executed in a dedicated go routine.
 func (sd *StreamDeck) read() {
 
 	for {

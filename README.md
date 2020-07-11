@@ -7,16 +7,14 @@
 ![streamdeck buttons](https://i.imgur.com/tEt3tPr.jpg "streamdeck Buttons")
 ![streamdeck slide show](https://i.imgur.com/gh1xXiU.jpg "streamdeck Slideshow")
 
-
-
-**streamdeck** is a library for interfacing with the [Elgato Stream Deck](https://www.elgato.com/en/gaming/stream-deck)
+**streamdeck** is a library for interfacing with the [Elgato/Corsair Stream Deck](https://www.elgato.com/en/gaming/stream-deck)
 
 This library is written in the programing language [Go](https://golang.org).
 
 ## Note
-This project is a golang API for the Elgato/Corsair StreamDeck. This library
+This project is a golang API for the Elgato/Corsair Stream Deck. This library
 unleashes the power of the StreamDeck. It allows you to completely customize
-the content of the device, without the need of the OEMs software.
+the content of the device, without the need of the OEM's software.
 
 ## License
 
@@ -29,32 +27,13 @@ does not have any runtime dependencies.
 
 ## CGO
 
-Compiling this library requires unfortunately a C compiler since the underlying [HID library](github.com/karalabe/hid) requires cgo for enumerating the
-HID devices.
+Compiling this library requires unfortunately a C compiler since the underlying [HID library](github.com/karalabe/hid) requires cgo for enumerating the HID devices.
 
 ## Supported Operating Systems
 
-In principal the library should work on Linux, MacOS and Windows (>=7).
+The library should work on Linux, MacOS and Windows (>=7).
 
 streamdeck works well on SoC boards like the Raspberry / Orange / Banana Pis.
-
-## How to Install
-
-````bash
-$ go get github.com/dh1tw/streamdeck
-````
-
-By default the images and fonts are not included in the binary. If you
-would like to do so, you can execute:
-
-````
-$ go get github.com/gobuffalo/packr/v2/packr2
-$ cd $GOPATH/src/github.com/dh1tw/streamdeck
-$ packr2
-````
-
-[Packr2](github.com/gobuffalo/packr/v2/packr2) will compile all the static
-assets into go file while will then be included when you execute `go build`.
 
 ### Linux Device rules
 
@@ -84,13 +63,9 @@ The auto generated documentation can be found at [godoc.org](https://godoc.org/g
 
 ## Examples
 
-There are a couple of examples located in the `examples` folder.
+Please checkout the dedicated repository [streamdeck-examples](https://github.com/dh1tw/streamdeck-examples) for examples.
 
-````bash
-$ go run examples/led_buttons/led_buttons.go
-$ go run examples/slideshow/slideshow.go
-...
-````
+My personal library of streamdeck elements / buttons can be found in the [streamdeck-buttons](https://github.com/dh1tw/streamdeck-buttons) repository.
 
 ## Credits
 
