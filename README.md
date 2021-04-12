@@ -49,7 +49,7 @@ After saving the udev rule, unplug and plug the streamdeck again into the USB po
 For the rule above, your user must be a member of the `plugdev` group.
 
 Make sure that your streamdeck is correctly recognized
-by executing:
+by executing the following command:
 
 ````bash
 $ go run examples/enumerate/enumerate.go
