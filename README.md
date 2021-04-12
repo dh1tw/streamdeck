@@ -1,8 +1,8 @@
 # streamdeck
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/dh1tw/streamdeck)](https://goreportcard.com/report/github.com/dh1tw/streamdeck)
+[![Go Reference](https://pkg.go.dev/badge/github.com/dh1tw/streamdeck.svg)](https://pkg.go.dev/github.com/dh1tw/streamdeck)
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://img.shields.io/badge/license-MIT-blue.svg)
-[![GoDoc](https://godoc.org/github.com/dh1tw/streamdeck?status.svg)](https://godoc.org/github.com/dh1tw/streamdeck)
 
 ![streamdeck buttons](https://i.imgur.com/tEt3tPr.jpg "streamdeck Buttons")
 ![streamdeck slide show](https://i.imgur.com/gh1xXiU.jpg "streamdeck Slideshow")
