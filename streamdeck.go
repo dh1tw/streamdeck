@@ -7,6 +7,7 @@ import (
 	"image"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/disintegration/gift"
 	"github.com/golang/freetype"
@@ -68,6 +69,7 @@ const (
 	BtnPressed BtnState = iota
 	// BtnReleased button released
 	BtnReleased
+	BtnLongPressed
 )
 
 // ReadErrorCb is a callback which gets executed in case reading from the
@@ -75,11 +77,19 @@ const (
 type ReadErrorCb func(err error)
 
 // StreamDeck is the object representing the Elgato Stream Deck.
+
+type btn struct {
+	state          BtnState
+	longPressTimer *time.Timer
+	stopTimer      chan struct{}
+}
+
 type StreamDeck struct {
 	sync.Mutex
-	device     *hid.Device
-	btnEventCb BtnEvent
-	btnState   []BtnState
+	device           *hid.Device
+	btnEventCb       BtnEvent
+	buttons          map[int]*btn
+	longPressTimeout time.Duration
 }
 
 // TextButton holds the lines to be written to a button and the desired
@@ -145,13 +155,20 @@ func NewStreamDeck(serial ...string) (*StreamDeck, error) {
 	}
 
 	sd := &StreamDeck{
-		device:   device,
-		btnState: make([]BtnState, NumButtons),
+		device:           device,
+		buttons:          make(map[int]*btn),
+		longPressTimeout: time.Second,
 	}
 
 	// initialize buttons to state BtnReleased
-	for i := range sd.btnState {
-		sd.btnState[i] = BtnReleased
+	for i := 0; i < NumButtons; i++ {
+		newBtn := &btn{
+			state:          BtnReleased,
+			longPressTimer: time.NewTimer(sd.longPressTimeout),
+			stopTimer:      make(chan struct{}),
+		}
+		newBtn.longPressTimer.Stop()
+		sd.buttons[i] = newBtn
 	}
 
 	sd.ClearAllBtns()
@@ -186,12 +203,39 @@ func (sd *StreamDeck) read() {
 		// we have to iterate over all 15 buttons and check if the state
 		// has changed. If it has changed, execute the callback.
 		for i, b := range data {
-			if sd.btnState[i] != itob(int(b)) {
-				sd.btnState[i] = itob(int(b))
+			myBtn, exists := sd.buttons[i]
+			if !exists {
+				fmt.Println("unknown button ", i)
+			}
+			// if state didn't change then move on
+			if myBtn.state == itob(int(b)) {
+				continue
+			}
+			// button pressed
+			if itob(int(b)) == BtnPressed {
+				myBtn.longPressTimer.Reset(sd.longPressTimeout)
+				myBtn.stopTimer = make(chan struct{})
+				myBtn.state = BtnPressed
+				go sd.btnEventCb(i, BtnPressed)
+				go func(index int) {
+					select {
+					case <-myBtn.longPressTimer.C:
+						if sd.btnEventCb != nil {
+							go sd.btnEventCb(index, BtnLongPressed)
+						}
+					case <-myBtn.stopTimer:
+						myBtn.longPressTimer.Stop()
+					}
+				}(i)
+				// continue
+			} else if itob(int(b)) == BtnReleased {
+				myBtn.state = BtnReleased
+				close(myBtn.stopTimer)
 				if sd.btnEventCb != nil {
-					btnState := sd.btnState[i]
-					go sd.btnEventCb(i, btnState)
+					go sd.btnEventCb(i, BtnReleased)
 				}
+			} else {
+				fmt.Println("** Should never arrive here!**")
 			}
 		}
 		sd.Unlock()
@@ -201,7 +245,7 @@ func (sd *StreamDeck) read() {
 // Close the connection to the Elgato Stream Deck
 func (sd *StreamDeck) Close() error {
 	sd.Lock()
-	sd.Unlock()
+	defer sd.Unlock()
 	return sd.device.Close()
 }
 
