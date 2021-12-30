@@ -216,7 +216,9 @@ func (sd *StreamDeck) read() {
 				myBtn.longPressTimer.Reset(sd.longPressTimeout)
 				myBtn.stopTimer = make(chan struct{})
 				myBtn.state = BtnPressed
-				go sd.btnEventCb(i, BtnPressed)
+				if sd.btnEventCb != nil {
+					go sd.btnEventCb(i, BtnPressed)
+				}
 				go func(index int) {
 					select {
 					case <-myBtn.longPressTimer.C:
