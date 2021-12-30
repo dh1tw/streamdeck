@@ -251,6 +251,13 @@ func (sd *StreamDeck) Close() error {
 	return sd.device.Close()
 }
 
+// Serial returns the Serial number of this Elgato Stream Deck
+func (sd *StreamDeck) Serial() string {
+	sd.Lock()
+	defer sd.Unlock()
+	return sd.device.Serial
+}
+
 // ClearBtn fills a particular key with the color black
 func (sd *StreamDeck) ClearBtn(btnIndex int) error {
 
