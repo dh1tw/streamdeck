@@ -4,9 +4,18 @@ package StreamDeck
 
 import "strconv"
 
-const _BtnState_name = "BtnPressedBtnReleased"
+func _() {
+	// An "invalid array index" compiler error signifies that the constant values have changed.
+	// Re-run the stringer command to generate them again.
+	var x [1]struct{}
+	_ = x[BtnPressed-0]
+	_ = x[BtnReleased-1]
+	_ = x[BtnLongPressed-2]
+}
 
-var _BtnState_index = [...]uint8{0, 10, 21}
+const _BtnState_name = "BtnPressedBtnReleasedBtnLongPressed"
+
+var _BtnState_index = [...]uint8{0, 10, 21, 35}
 
 func (i BtnState) String() string {
 	if i < 0 || i >= BtnState(len(_BtnState_index)-1) {
