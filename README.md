@@ -69,7 +69,7 @@ My personal library of streamdeck elements / buttons can be found in the [stream
 
 ## Credits
 
-This project would not have been possible without the work of [Alex Van Camp](https://github.com/Lange). In particular his
-[notes of the StreamDeck's protocol](https://github.com/Lange/node-elgato-stream-deck/blob/master/NOTES.md)
+This project would not have been possible without the work of [Alex Van Camp](https://github.com/alvancamp). In particular his
+[notes of the StreamDeck's protocol](https://github.com/alvancamp/node-elgato-stream-deck/blob/master/NOTES.md)
 were very helpful.
-Alex has provided a [reference implementation](https://github.com/Lange/node-elgato-stream-deck) in Javascript / Node.js.
+Alex has provided a [reference implementation](https://github.com/alvancamp/node-elgato-stream-deck) in Javascript / Node.js.
