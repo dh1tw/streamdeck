@@ -1,10 +1,14 @@
 //go:generate stringer -type=BtnState
 
-package StreamDeck
+package streamdeck
 
 import (
+	"bytes"
+	"encoding/binary"
 	"fmt"
 	"image"
+	"image/jpeg"
+	"log"
 	"os"
 	"sync"
 	"time"
@@ -22,48 +26,8 @@ import (
 	_ "image/png"  // support png
 )
 
-type Config struct {
-	ProductID        uint16 // ProductID is the USB ProductID
-	NumButtonColumns int
-	NumButtonRows    int
-	Spacer           int // Spacer is the spacing distance (in pixel) of two buttons on the Stream Deck.
-
-}
-
-func (c Config) NumButtons() int {
-	return c.NumButtonRows * c.NumButtonColumns
-}
-
-// PanelWidth is the total screen width of the Stream Deck (including spacers).
-func (c *Config) PanelWidth() int {
-	return c.NumButtonColumns*ButtonSize + c.Spacer*(c.NumButtonColumns-1)
-}
-
-// PanelHeight is the total screen height of the stream deck (including spacers).
-func (c *Config) PanelHeight() int {
-	return c.NumButtonRows*ButtonSize + c.Spacer*(c.NumButtonRows-1)
-}
-
-var Original = Config{
-	ProductID:        0x80,
-	NumButtonColumns: 5,
-	NumButtonRows:    3,
-	Spacer:           19,
-}
-
 // VendorID is the USB VendorID assigned to Elgato (0x0fd9)
 const VendorID = 4057
-
-// numFirstMsgPixels is the amount of pixels which have to be sent to the
-// Stream Deck in the first message.
-const numFirstMsgPixels = 2583
-
-// numSecondMsgPixels is the amount of pixels which have to be send to the
-// Stream Deck in the second message.
-const numSecondMsgPixels = 2601
-
-// ButtonSize is the size of a button (in pixel).
-const ButtonSize = 72
 
 // BtnEvent is a callback which gets executed when the state of a button changes,
 // so whenever it gets pressed or released.
@@ -132,7 +96,7 @@ type Page interface {
 // the optional serial number of the Device. In the examples folder there is
 // a small program which enumerates all available Stream Decks. If no serial number
 // is supplied, the first StreamDeck found will be selected.
-func NewStreamDeck(c Config, serial ...string) (*StreamDeck, error) {
+func NewStreamDeck(logger *log.Logger, c Config, serial ...string) (*StreamDeck, error) {
 
 	if len(serial) > 1 {
 		return nil, fmt.Errorf("only <= 1 serial numbers must be provided")
@@ -143,6 +107,8 @@ func NewStreamDeck(c Config, serial ...string) (*StreamDeck, error) {
 	if len(devices) == 0 {
 		return nil, fmt.Errorf("no stream deck device found")
 	}
+
+	log.Printf("Found %d StreamDecks", len(devices))
 
 	id := 0
 	if len(serial) == 1 {
@@ -158,10 +124,14 @@ func NewStreamDeck(c Config, serial ...string) (*StreamDeck, error) {
 		}
 	}
 
+	log.Printf("Connecting to StreamDeck: %v", devices[id])
+
 	device, err := devices[id].Open()
 	if err != nil {
 		return nil, err
 	}
+
+	log.Printf("Connected to StreamDeck: %v", devices[id])
 
 	sd := &StreamDeck{
 		device:           device,
@@ -181,8 +151,11 @@ func NewStreamDeck(c Config, serial ...string) (*StreamDeck, error) {
 		sd.buttons[i] = newBtn
 	}
 
-	sd.ClearAllBtns()
+	log.Printf("Going to ClearAllBtns")
 
+	//sd.ClearAllBtns()
+
+	log.Printf("Starting read thread")
 	go sd.read()
 
 	return sd, nil
@@ -296,11 +269,37 @@ func (sd *StreamDeck) FillColor(btnIndex, r, g, b int) error {
 		return err
 	}
 
-	img := image.NewRGBA(image.Rect(0, 0, ButtonSize, ButtonSize))
-	color := color.RGBA{uint8(r), uint8(g), uint8(b), 0}
+	img := image.NewRGBA(image.Rect(0, 0, sd.config.ButtonSize, sd.config.ButtonSize))
+	color := color.RGBA{uint8(r), uint8(g), uint8(b), 1}
 	draw.Draw(img, img.Bounds(), image.NewUniform(color), image.Point{0, 0}, draw.Src)
 
 	return sd.FillImage(btnIndex, img)
+}
+
+func (sd *StreamDeck) encodeImage(img image.Image) ([]byte, error) {
+	if sd.config.ImageFormat == "bmp" {
+		imgBuf := make([]byte, 0, sd.config.ButtonSize*sd.config.ButtonSize*3)
+
+		for row := 0; row < sd.config.ButtonSize; row++ {
+			for line := sd.config.ButtonSize - 1; line >= 0; line-- {
+				r, g, b, _ := img.At(line, row).RGBA()
+				imgBuf = append(imgBuf, byte(r), byte(b), byte(g))
+			}
+		}
+		return imgBuf, nil
+	}
+
+	if sd.config.ImageFormat == "jpg" {
+		buf := bytes.Buffer{}
+		err := jpeg.Encode(&buf, img, nil)
+		if err != nil {
+			return nil, err
+		}
+		return buf.Bytes(), nil
+	}
+
+	return nil, fmt.Errorf("unknown image format [%s]", sd.config.ImageFormat)
+
 }
 
 // FillImage fills the given key with an image. For best performance, provide
@@ -313,26 +312,54 @@ func (sd *StreamDeck) FillImage(btnIndex int, img image.Image) error {
 
 	// if necessary, rescale the picture
 	rect := img.Bounds()
-	if rect.Dx() != ButtonSize {
-		img = resize(img, ButtonSize, ButtonSize)
+	if rect.Dx() != sd.config.ButtonSize {
+		img = resize(img, sd.config.ButtonSize, sd.config.ButtonSize)
 	}
 
-	imgBuf := make([]byte, 0, ButtonSize*ButtonSize*3)
+	imgBuf, err := sd.encodeImage(img)
+	if err != nil {
+		return err
+	}
 
-	for row := 0; row < ButtonSize; row++ {
-		for line := ButtonSize - 1; line >= 0; line-- {
-			r, g, b, _ := img.At(line, row).RGBA()
-			imgBuf = append(imgBuf, byte(r), byte(b), byte(g))
+	headerSize := 8
+	bytesLeft := len(imgBuf)
+	pos := 0
+	pageNumber := uint16(0)
+
+	for bytesLeft > 0 {
+		imgToSend := min(bytesLeft, 1024-headerSize)
+
+		buf := make([]byte, 1024)
+		bytesLeft -= imgToSend
+
+		buf[0] = 0x02
+		buf[1] = 0x07
+		buf[2] = byte(btnIndex)
+		if bytesLeft == 0 {
+			buf[3] = 1
+		} else {
+			buf[3] = 0
 		}
+		binary.LittleEndian.PutUint16(buf[4:], uint16(imgToSend))
+		log.Printf("x %x %x", buf[4], buf[5])
+		binary.LittleEndian.PutUint16(buf[6:], pageNumber)
+
+		copy(buf[8:], imgBuf[pos:(pos+imgToSend)])
+
+		log.Printf("going to Write len(buf): %d imgToSend: %d bytesLeft: %d pageNumber: %d len(imgBuf): %d", len(buf), imgToSend, bytesLeft, pageNumber, len(imgBuf))
+
+		n, err := sd.device.Write(buf)
+		if err != nil {
+			return err
+		}
+		if n != len(buf) {
+			return fmt.Errorf("only wrote %d of %d", n, len(buf))
+		}
+
+		pageNumber++
+		pos += imgToSend
+
 	}
-
-	page1 := imgBuf[0 : numFirstMsgPixels*3]
-	page2 := imgBuf[numFirstMsgPixels*3:]
-
-	sd.Lock()
-	sd.writeMsg1(btnIndex, page1)
-	sd.writeMsg2(btnIndex, page2)
-	sd.Unlock()
 
 	return nil
 }
@@ -377,12 +404,12 @@ func (sd *StreamDeck) FillPanel(img image.Image) error {
 		for col := 0; col < sd.config.NumButtonColumns; col++ {
 			rect := image.Rectangle{
 				Min: image.Point{
-					sd.config.PanelWidth() - ButtonSize - col*ButtonSize - col*sd.config.Spacer,
-					row*ButtonSize + row*sd.config.Spacer,
+					sd.config.PanelWidth() - sd.config.ButtonSize - col*sd.config.ButtonSize - col*sd.config.Spacer,
+					row*sd.config.ButtonSize + row*sd.config.Spacer,
 				},
 				Max: image.Point{
-					sd.config.PanelWidth() - 1 - col*ButtonSize - col*sd.config.Spacer,
-					ButtonSize - 1 + row*ButtonSize + row*sd.config.Spacer,
+					sd.config.PanelWidth() - 1 - col*sd.config.ButtonSize - col*sd.config.Spacer,
+					sd.config.ButtonSize - 1 + row*sd.config.ButtonSize + row*sd.config.Spacer,
 				},
 			}
 			sd.FillImage(counter, img.(*image.RGBA).SubImage(rect))
@@ -417,7 +444,7 @@ func (sd *StreamDeck) WriteText(btnIndex int, textBtn TextButton) error {
 		return err
 	}
 
-	img := image.NewRGBA(image.Rect(0, 0, ButtonSize, ButtonSize))
+	img := image.NewRGBA(image.Rect(0, 0, sd.config.ButtonSize, sd.config.ButtonSize))
 	bg := image.NewUniform(textBtn.BgColor)
 	// fill button with Background color
 	draw.Draw(img, img.Bounds(), bg, image.Point{0, 0}, draw.Src)
@@ -450,24 +477,14 @@ func (sd *StreamDeck) checkValidKeyIndex(keyIndex int) error {
 	return nil
 }
 
-// writeMsg1 writes the first part of a button's content to the stream deck.
-func (sd *StreamDeck) writeMsg1(btnIndex int, c []byte) {
-	prefix := []byte{'\x02', '\x01', '\x01', '\x00', '\x00', byte(btnIndex + 1), '\x00', '\x00', '\x00', '\x00',
-		'\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x42', '\x4D', '\xF6', '\x3C', '\x00', '\x00', '\x00',
-		'\x00', '\x00', '\x00', '\x36', '\x00', '\x00', '\x00', '\x28', '\x00', '\x00', '\x00', '\x48', '\x00',
-		'\x00', '\x00', '\x48', '\x00', '\x00', '\x00', '\x01', '\x00', '\x18', '\x00', '\x00', '\x00', '\x00',
-		'\x00', '\xC0', '\x3C', '\x00', '\x00', '\xC4', '\x0E', '\x00', '\x00', '\xC4', '\x0E', '\x00', '\x00',
-		'\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00'}
-	merged := append(prefix, c...)
-	sd.device.Write(merged)
-}
+// b 0 -> 100
+func (sd *StreamDeck) SetBrightness(b uint16) error {
 
-// writeMsg2 writes the second part of a button's content to the stream deck.
-func (sd *StreamDeck) writeMsg2(btnIndex int, c []byte) {
-	prefix := []byte{'\x02', '\x01', '\x02', '\x00', '\x01', byte(btnIndex + 1), '\x00', '\x00', '\x00', '\x00',
-		'\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00'}
-	merged := append(prefix, c...)
-	sd.device.Write(merged)
+	buf := []byte{0x03, 0x08, 0xFF, 0xFF}
+	binary.LittleEndian.PutUint16(buf[2:], b)
+
+	_, err := sd.device.SendFeatureReport(buf)
+	return err
 }
 
 // resize returns a resized copy of the supplied image with the given width and height.
