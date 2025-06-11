@@ -169,12 +169,24 @@ func (sd *StreamDeck) SetBtnEventCb(ev BtnEvent) {
 // Read will listen in a for loop for incoming messages from the Stream Deck.
 // It is typically executed in a dedicated go routine.
 func (sd *StreamDeck) read() {
-
+	myState := State{}
 	for {
 		data := make([]byte, 16)
 		_, err := sd.device.Read(data)
 		if err != nil {
 			fmt.Println(err)
+			continue
+		}
+
+		err = myState.Update(data)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+
+		fmt.Printf("hi %v\n", myState)
+		if true {
+			continue
 		}
 
 		data = data[1:] // strip off the first byte; usage unknown, but it is always '\x01'
