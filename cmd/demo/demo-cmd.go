@@ -1,6 +1,7 @@
 package main
 
 import (
+	"image/color"
 	"log"
 	"time"
 
@@ -27,8 +28,18 @@ func realMain(logger *log.Logger) error {
 		return err
 	}
 
-	logger.Printf("going to FillColor")
 	err = sd.FillColor(0, 255, 0, 0)
+	if err != nil {
+		return err
+	}
+
+	err = sd.WriteText(1, streamdeck.TextButton{
+		Lines: []streamdeck.TextLine{
+			{Text: "foo", PosX: 10, PosY: 20, FontSize: 20, FontColor: color.RGBA{255, 0, 0, 255}},
+			{Text: "bar", PosX: 10, PosY: 80, FontSize: 20, FontColor: color.RGBA{0, 0, 255, 255}},
+		},
+		BgColor: color.RGBA{0, 255, 0, 255},
+	})
 	if err != nil {
 		return err
 	}

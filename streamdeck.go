@@ -151,11 +151,8 @@ func NewStreamDeck(logger *log.Logger, c Config, serial ...string) (*StreamDeck,
 		sd.buttons[i] = newBtn
 	}
 
-	log.Printf("Going to ClearAllBtns")
+	sd.ClearAllBtns()
 
-	//sd.ClearAllBtns()
-
-	log.Printf("Starting read thread")
 	go sd.read()
 
 	return sd, nil
@@ -450,6 +447,9 @@ func (sd *StreamDeck) WriteText(btnIndex int, textBtn TextButton) error {
 	draw.Draw(img, img.Bounds(), bg, image.Point{0, 0}, draw.Src)
 
 	for _, line := range textBtn.Lines {
+		if line.Font == nil {
+			line.Font = MonoRegular
+		}
 		fontColor := image.NewUniform(line.FontColor)
 		c := freetype.NewContext()
 		c.SetDPI(72)
