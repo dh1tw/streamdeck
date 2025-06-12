@@ -2,6 +2,7 @@ package streamdeck
 
 import (
 	"bytes"
+	"context"
 	"encoding/binary"
 	"fmt"
 	"image"
@@ -36,6 +37,9 @@ type StreamDeck struct {
 	device     *hid.Device
 	btnEventCb BtnEvent
 	config     Config
+
+	waitGroup sync.WaitGroup
+	cancel    context.CancelFunc
 }
 
 // TextButton holds the lines to be written to a button and the desired
@@ -60,7 +64,7 @@ type TextLine struct {
 // the optional serial number of the Device. In the examples folder there is
 // a small program which enumerates all available Stream Decks. If no serial number
 // is supplied, the first StreamDeck found will be selected.
-func NewStreamDeck(logger *log.Logger, c Config, serial ...string) (*StreamDeck, error) {
+func NewStreamDeck(c Config, serial ...string) (*StreamDeck, error) {
 
 	if len(serial) > 1 {
 		return nil, fmt.Errorf("only <= 1 serial numbers must be provided")
@@ -104,7 +108,11 @@ func NewStreamDeck(logger *log.Logger, c Config, serial ...string) (*StreamDeck,
 
 	sd.ClearAllBtns()
 
-	go sd.read()
+	cancelCtx, cancel := context.WithCancel(context.Background())
+	sd.cancel = cancel
+
+	sd.waitGroup.Add(1)
+	go sd.read(cancelCtx)
 
 	return sd, nil
 }
@@ -119,9 +127,10 @@ func (sd *StreamDeck) SetBtnEventCb(ev BtnEvent) {
 
 // Read will listen in a for loop for incoming messages from the Stream Deck.
 // It is typically executed in a dedicated go routine.
-func (sd *StreamDeck) read() {
+func (sd *StreamDeck) read(ctx context.Context) {
+	defer sd.waitGroup.Done()
 	myState := State{}
-	for {
+	for ctx.Err() == nil {
 		data := make([]byte, 16)
 		_, err := sd.device.Read(data)
 		if err != nil {
@@ -135,25 +144,30 @@ func (sd *StreamDeck) read() {
 			continue
 		}
 
-		if sd.btnEventCb != nil {
-			sd.lock.Lock()
-			sd.btnEventCb(myState, event)
-			sd.lock.Unlock()
+		var cb BtnEvent
+
+		sd.lock.Lock()
+		cb = sd.btnEventCb
+		sd.lock.Unlock()
+
+		if cb != nil {
+			go func() {
+				cb(myState, event)
+			}()
 		}
 	}
 }
 
 // Close the connection to the Elgato Stream Deck
 func (sd *StreamDeck) Close() error {
-	sd.lock.Lock()
-	defer sd.lock.Unlock()
-	return sd.device.Close()
+	sd.cancel()
+	err := sd.device.Close()
+	sd.waitGroup.Wait()
+	return err
 }
 
 // Serial returns the Serial number of this Elgato Stream Deck
 func (sd *StreamDeck) Serial() string {
-	sd.lock.Lock()
-	defer sd.lock.Unlock()
 	return sd.device.Serial
 }
 

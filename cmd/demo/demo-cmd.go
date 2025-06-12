@@ -9,15 +9,14 @@ import (
 )
 
 func main() {
-	logger := log.Default()
-	err := realMain(logger)
+	err := realMain()
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 
-func realMain(logger *log.Logger) error {
-	sd, err := streamdeck.NewStreamDeck(logger, streamdeck.Plus)
+func realMain() error {
+	sd, err := streamdeck.NewStreamDeck(streamdeck.Plus)
 	if err != nil {
 		return err
 	}
@@ -45,10 +44,10 @@ func realMain(logger *log.Logger) error {
 	}
 
 	sd.SetBtnEventCb(func(s streamdeck.State, e streamdeck.Event) {
-		logger.Printf("got event: %v state: %v", e, s)
+		log.Printf("got event: %v state: %v", e, s)
 	})
 
-	logger.Printf("sleeping")
+	log.Printf("sleeping")
 
 	time.Sleep(10 * time.Second)
 
