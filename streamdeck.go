@@ -1,5 +1,3 @@
-//go:generate stringer -type=BtnState
-
 package streamdeck
 
 import (
@@ -11,7 +9,6 @@ import (
 	"log"
 	"os"
 	"sync"
-	"time"
 
 	"github.com/disintegration/gift"
 	"github.com/golang/freetype"
@@ -31,38 +28,14 @@ const VendorID = 4057
 
 // BtnEvent is a callback which gets executed when the state of a button changes,
 // so whenever it gets pressed or released.
-type BtnEvent func(btnIndex int, newBtnState BtnState)
-
-// BtnState is a type representing the button state.
-type BtnState int
-
-const (
-	// BtnPressed button pressed
-	BtnPressed BtnState = iota
-	// BtnReleased button released
-	BtnReleased
-	BtnLongPressed
-)
-
-// ReadErrorCb is a callback which gets executed in case reading from the
-// Stream Deck fails (e.g. the cable get's disconnected).
-type ReadErrorCb func(err error)
+type BtnEvent func(s State, e Event)
 
 // StreamDeck is the object representing the Elgato Stream Deck.
-
-type btn struct {
-	state          BtnState
-	longPressTimer *time.Timer
-	stopTimer      chan struct{}
-}
-
 type StreamDeck struct {
-	sync.Mutex
-	device           *hid.Device
-	btnEventCb       BtnEvent
-	buttons          map[int]*btn
-	longPressTimeout time.Duration
-	config           Config
+	lock       sync.Mutex
+	device     *hid.Device
+	btnEventCb BtnEvent
+	config     Config
 }
 
 // TextButton holds the lines to be written to a button and the desired
@@ -80,15 +53,6 @@ type TextLine struct {
 	Font      *truetype.Font
 	FontSize  float64
 	FontColor color.Color
-}
-
-// Page contains the configuration of one particular page of buttons. Pages
-// can be nested to an arbitrary depth.
-type Page interface {
-	Set(btnIndex int, state BtnState) Page
-	Parent() Page
-	Draw()
-	SetActive(bool)
 }
 
 // NewStreamDeck is the constructor of the StreamDeck object. If several StreamDecks
@@ -134,21 +98,8 @@ func NewStreamDeck(logger *log.Logger, c Config, serial ...string) (*StreamDeck,
 	log.Printf("Connected to StreamDeck: %v", devices[id])
 
 	sd := &StreamDeck{
-		device:           device,
-		buttons:          make(map[int]*btn),
-		longPressTimeout: time.Second,
-		config:           c,
-	}
-
-	// initialize buttons to state BtnReleased
-	for i := 0; i < c.NumButtons(); i++ {
-		newBtn := &btn{
-			state:          BtnReleased,
-			longPressTimer: time.NewTimer(sd.longPressTimeout),
-			stopTimer:      make(chan struct{}),
-		}
-		newBtn.longPressTimer.Stop()
-		sd.buttons[i] = newBtn
+		device: device,
+		config: c,
 	}
 
 	sd.ClearAllBtns()
@@ -161,8 +112,8 @@ func NewStreamDeck(logger *log.Logger, c Config, serial ...string) (*StreamDeck,
 // SetBtnEventCb sets the BtnEvent callback which get's executed whenever
 // a Button event (pressed/released) occures.
 func (sd *StreamDeck) SetBtnEventCb(ev BtnEvent) {
-	sd.Lock()
-	defer sd.Unlock()
+	sd.lock.Lock()
+	defer sd.lock.Unlock()
 	sd.btnEventCb = ev
 }
 
@@ -184,69 +135,25 @@ func (sd *StreamDeck) read() {
 			continue
 		}
 
-		fmt.Printf("hi %v %v\n", myState, event)
-		if true {
-			continue
+		if sd.btnEventCb != nil {
+			sd.lock.Lock()
+			sd.btnEventCb(myState, event)
+			sd.lock.Unlock()
 		}
-
-		data = data[1:] // strip off the first byte; usage unknown, but it is always '\x01'
-
-		sd.Lock()
-		// we have to iterate over all 15 buttons and check if the state
-		// has changed. If it has changed, execute the callback.
-		for i, b := range data {
-			myBtn, exists := sd.buttons[i]
-			if !exists {
-				fmt.Println("unknown button ", i)
-			}
-			// if state didn't change then move on
-			if myBtn.state == itob(int(b)) {
-				continue
-			}
-			// button pressed
-			if itob(int(b)) == BtnPressed {
-				myBtn.longPressTimer.Reset(sd.longPressTimeout)
-				myBtn.stopTimer = make(chan struct{})
-				myBtn.state = BtnPressed
-				if sd.btnEventCb != nil {
-					go sd.btnEventCb(i, BtnPressed)
-				}
-				go func(index int) {
-					select {
-					case <-myBtn.longPressTimer.C:
-						if sd.btnEventCb != nil {
-							go sd.btnEventCb(index, BtnLongPressed)
-						}
-					case <-myBtn.stopTimer:
-						myBtn.longPressTimer.Stop()
-					}
-				}(i)
-				// continue
-			} else if itob(int(b)) == BtnReleased {
-				myBtn.state = BtnReleased
-				close(myBtn.stopTimer)
-				if sd.btnEventCb != nil {
-					go sd.btnEventCb(i, BtnReleased)
-				}
-			} else {
-				fmt.Println("** Should never arrive here!**")
-			}
-		}
-		sd.Unlock()
 	}
 }
 
 // Close the connection to the Elgato Stream Deck
 func (sd *StreamDeck) Close() error {
-	sd.Lock()
-	defer sd.Unlock()
+	sd.lock.Lock()
+	defer sd.lock.Unlock()
 	return sd.device.Close()
 }
 
 // Serial returns the Serial number of this Elgato Stream Deck
 func (sd *StreamDeck) Serial() string {
-	sd.Lock()
-	defer sd.Unlock()
+	sd.lock.Lock()
+	defer sd.lock.Unlock()
 	return sd.device.Serial
 }
 
@@ -329,6 +236,9 @@ func (sd *StreamDeck) FillImage(btnIndex int, img image.Image) error {
 	if err != nil {
 		return err
 	}
+
+	sd.lock.Lock()
+	defer sd.lock.Unlock()
 
 	headerSize := 8
 	bytesLeft := len(imgBuf)
@@ -527,12 +437,4 @@ func checkRGB(value int) error {
 		return fmt.Errorf("invalid color range")
 	}
 	return nil
-}
-
-// int to ButtonState
-func itob(i int) BtnState {
-	if i == 0 {
-		return BtnReleased
-	}
-	return BtnPressed
 }

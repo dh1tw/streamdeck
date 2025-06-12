@@ -44,9 +44,13 @@ func realMain(logger *log.Logger) error {
 		return err
 	}
 
+	sd.SetBtnEventCb(func(s streamdeck.State, e streamdeck.Event) {
+		logger.Printf("got event: %v state: %v", e, s)
+	})
+
 	logger.Printf("sleeping")
 
-	time.Sleep(5 * time.Second)
+	time.Sleep(10 * time.Second)
 
 	err = sd.SetBrightness(50)
 	if err != nil {
