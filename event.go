@@ -6,15 +6,52 @@ import (
 
 const DialMax = 100
 
+type EventKind int
+
+const (
+	EventUnknown = iota
+	EventKeyPush
+	EventKeyUnpush
+	EventDialPush
+	EventDialUnpush
+	EventDialTurn
+)
+
+func (ev EventKind) String() string {
+	switch ev {
+	case EventKeyPush:
+		return "key-push"
+	case EventKeyUnpush:
+		return "key-unpush"
+	case EventDialPush:
+		return "dial-push"
+	case EventDialUnpush:
+		return "dial-unpush"
+	case EventDialTurn:
+		return "dial-turn"
+	default:
+		return "unknown"
+	}
+}
+
+type Event struct {
+	Kind  EventKind
+	Which int
+}
+
+func (e Event) String() string {
+	return fmt.Sprintf("%s:%d", e.Kind.String(), e.Which)
+}
+
 type State struct {
 	Keys     []bool
 	DialPush []bool
 	DialPos  []int // 0 -> 100
 }
 
-func (s *State) Update(b []byte) error {
+func (s *State) Update(b []byte) (Event, error) {
 	if b[0] != 1 {
-		return fmt.Errorf("why isn't it starting with 1, %v", b)
+		return Event{}, fmt.Errorf("why isn't it starting with 1, %v", b)
 	}
 
 	switch b[1] {
@@ -26,44 +63,72 @@ func (s *State) Update(b []byte) error {
 		}
 		return s.updateDialTurn(b[5:])
 	default:
-		return fmt.Errorf("unknown event type %d", b[1])
+		return Event{}, fmt.Errorf("unknown event type %d", b[1])
 	}
 }
 
-func applyBools(in []bool, data []byte) []bool {
+func applyBools(in []bool, data []byte) (int, []bool) {
+	changed := -1
 	for i, b := range data {
 		if len(in) <= i {
 			in = append(in, false)
 		}
+
+		prev := in[i]
 
 		if b == 0 {
 			in[i] = false
 		} else {
 			in[i] = true
 		}
+
+		if prev != in[i] {
+			changed = i
+		}
 	}
-	return in
+	return changed, in
 }
 
-func (s *State) updateKeyPress(data []byte) error {
-	s.Keys = applyBools(s.Keys, data)
-	return nil
+func (s *State) updateKeyPress(data []byte) (Event, error) {
+	var changed int
+	changed, s.Keys = applyBools(s.Keys, data)
+	if changed >= 0 {
+		if s.Keys[changed] {
+			return Event{EventKeyPush, changed}, nil
+		}
+		return Event{EventKeyUnpush, changed}, nil
+	}
+	return Event{EventUnknown, changed}, nil
 }
 
-func (s *State) updateDialPush(data []byte) error {
-	s.DialPush = applyBools(s.DialPush, data)
-	return nil
-
+func (s *State) updateDialPush(data []byte) (Event, error) {
+	var changed int
+	changed, s.DialPush = applyBools(s.DialPush, data)
+	if changed >= 0 {
+		if s.DialPush[changed] {
+			return Event{EventDialPush, changed}, nil
+		}
+		return Event{EventDialUnpush, changed}, nil
+	}
+	return Event{EventUnknown, changed}, nil
 }
 
-func (s *State) updateDialTurn(data []byte) error {
-	s.DialPos = applyDelta(s.DialPos, data)
-	return nil
+func (s *State) updateDialTurn(data []byte) (Event, error) {
+	var changed int
+	changed, s.DialPos = applyDelta(s.DialPos, data)
+	if changed >= 0 {
+		return Event{EventDialTurn, changed}, nil
+	}
+	return Event{EventUnknown, changed}, nil
 }
 
-func applyDelta(in []int, data []byte) []int {
+func applyDelta(in []int, data []byte) (int, []int) {
+	changed := -1
 
 	for i, d := range data {
+		if d != 0 {
+			changed = i
+		}
 		if len(in) <= i {
 			in = append(in, 50)
 		}
@@ -78,5 +143,5 @@ func applyDelta(in []int, data []byte) []int {
 
 		in[i] = output
 	}
-	return in
+	return changed, in
 }

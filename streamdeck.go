@@ -178,13 +178,13 @@ func (sd *StreamDeck) read() {
 			continue
 		}
 
-		err = myState.Update(data)
+		event, err := myState.Update(data)
 		if err != nil {
 			fmt.Println(err)
 			continue
 		}
 
-		fmt.Printf("hi %v\n", myState)
+		fmt.Printf("hi %v %v\n", myState, event)
 		if true {
 			continue
 		}
