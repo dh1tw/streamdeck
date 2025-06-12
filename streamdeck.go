@@ -24,6 +24,15 @@ import (
 	_ "image/png"  // support png
 )
 
+var Debug = false
+
+func debug(f string, args ...interface{}) {
+	if !Debug {
+		return
+	}
+	log.Printf(f, args...)
+}
+
 // VendorID is the USB VendorID assigned to Elgato (0x0fd9)
 const VendorID = 4057
 
@@ -181,10 +190,14 @@ func (sd *StreamDeck) ClearBtn(btnIndex int) error {
 }
 
 // ClearAllBtns fills all keys with the color black
-func (sd *StreamDeck) ClearAllBtns() {
+func (sd *StreamDeck) ClearAllBtns() error {
 	for i := sd.config.NumButtons() - 1; i >= 0; i-- {
-		sd.ClearBtn(i)
+		err := sd.ClearBtn(i)
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 // FillColor fills the given button with a solid color.
@@ -274,12 +287,12 @@ func (sd *StreamDeck) FillImage(btnIndex int, img image.Image) error {
 			buf[3] = 0
 		}
 		binary.LittleEndian.PutUint16(buf[4:], uint16(imgToSend))
-		log.Printf("x %x %x", buf[4], buf[5])
+		debug("x %x %x", buf[4], buf[5])
 		binary.LittleEndian.PutUint16(buf[6:], pageNumber)
 
 		copy(buf[8:], imgBuf[pos:(pos+imgToSend)])
 
-		log.Printf("going to Write len(buf): %d imgToSend: %d bytesLeft: %d pageNumber: %d len(imgBuf): %d", len(buf), imgToSend, bytesLeft, pageNumber, len(imgBuf))
+		debug("going to Write len(buf): %d imgToSend: %d bytesLeft: %d pageNumber: %d len(imgBuf): %d", len(buf), imgToSend, bytesLeft, pageNumber, len(imgBuf))
 
 		n, err := sd.device.Write(buf)
 		if err != nil {
