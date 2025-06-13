@@ -405,7 +405,15 @@ func (sd *StreamDeck) WriteText(btnIndex int, textBtn TextButton) error {
 	// fill button with Background color
 	draw.Draw(img, img.Bounds(), bg, image.Point{0, 0}, draw.Src)
 
-	for _, line := range textBtn.Lines {
+	return sd.WriteTextOnImage(btnIndex, img, textBtn.Lines)
+}
+
+// WriteText can write several lines of Text to a button. It is up to the
+// user to ensure that the lines fit properly on the button.
+func (sd *StreamDeck) WriteTextOnImage(btnIndex int, imgIn image.Image, lines []TextLine) error {
+	img := resize(imgIn, sd.config.ButtonSize, sd.config.ButtonSize)
+
+	for _, line := range lines {
 		if line.Font == nil {
 			line.Font = MonoRegular
 		}
@@ -446,7 +454,7 @@ func (sd *StreamDeck) SetBrightness(b uint16) error {
 }
 
 // resize returns a resized copy of the supplied image with the given width and height.
-func resize(img image.Image, width, height int) image.Image {
+func resize(img image.Image, width, height int) *image.RGBA {
 	g := gift.New(
 		gift.Resize(width, height, gift.LanczosResampling),
 		gift.UnsharpMask(1, 1, 0),
