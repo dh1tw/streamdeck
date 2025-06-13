@@ -7,6 +7,7 @@ type Config struct {
 	Spacer           int // Spacer is the spacing distance (in pixel) of two buttons on the Stream Deck.
 	ButtonSize       int
 	ImageFormat      string
+	ImageRotate      bool
 }
 
 func (c Config) NumButtons() int {
@@ -29,6 +30,7 @@ var Original = Config{
 	NumButtonRows:    3,
 	Spacer:           19,
 	ButtonSize:       72,
+	ImageFormat:      "bmp",
 }
 
 var Original2 = Config{
@@ -37,6 +39,8 @@ var Original2 = Config{
 	NumButtonRows:    3,
 	Spacer:           19,
 	ButtonSize:       72,
+	ImageFormat:      "jpg",
+	ImageRotate:      true,
 }
 
 var Plus = Config{

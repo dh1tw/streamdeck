@@ -220,6 +220,16 @@ func (sd *StreamDeck) FillColor(btnIndex, r, g, b int) error {
 }
 
 func (sd *StreamDeck) encodeImage(img image.Image) ([]byte, error) {
+	if sd.config.ImageRotate {
+		newImage := image.NewRGBA(img.Bounds())
+		for x := 0; x < sd.config.ButtonSize; x++ {
+			for y := 0; y < sd.config.ButtonSize; y++ {
+				newImage.Set(x, y, img.At(sd.config.ButtonSize-x, sd.config.ButtonSize-y))
+			}
+		}
+		img = newImage
+	}
+
 	if sd.config.ImageFormat == "bmp" {
 		imgBuf := make([]byte, 0, sd.config.ButtonSize*sd.config.ButtonSize*3)
 
@@ -414,8 +424,7 @@ func (sd *StreamDeck) WriteText(btnIndex int, textBtn TextButton) error {
 		}
 	}
 
-	sd.FillImage(btnIndex, img)
-	return nil
+	return sd.FillImage(btnIndex, img)
 }
 
 // checkValidKeyIndex checks that the keyIndex is valid
