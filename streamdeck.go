@@ -140,7 +140,7 @@ func (sd *StreamDeck) read(ctx context.Context) {
 	defer sd.waitGroup.Done()
 	myState := State{}
 	for ctx.Err() == nil {
-		data := make([]byte, 16)
+		data := make([]byte, 24)
 		_, err := sd.device.Read(data)
 		if err != nil {
 			fmt.Println(err)
