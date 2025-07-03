@@ -39,8 +39,8 @@ func realMain() error {
 
 	err = sd.WriteText(1, streamdeck.TextButton{
 		Lines: []streamdeck.TextLine{
-			{Text: "foo", PosX: 10, PosY: 20, FontSize: 20, FontColor: color.RGBA{255, 0, 0, 255}},
-			{Text: "bar", PosX: 10, PosY: 80, FontSize: 20, FontColor: color.RGBA{0, 0, 255, 255}},
+			{Text: "foo", PosX: 10, PosY: 10, FontSize: 20, FontColor: color.RGBA{255, 0, 0, 255}},
+			{Text: "bar", PosX: 10, PosY: 40, FontSize: 20, FontColor: color.RGBA{0, 0, 255, 255}},
 		},
 		BgColor: color.RGBA{0, 255, 0, 255},
 	})
