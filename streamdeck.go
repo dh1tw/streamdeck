@@ -231,7 +231,12 @@ func (sd *StreamDeck) encodeImage(img image.Image) ([]byte, error) {
 	}
 
 	if sd.config.ImageFormat == "bmp" {
-		imgBuf := make([]byte, 0, sd.config.ButtonSize*sd.config.ButtonSize*3)
+		imgBuf := []byte{
+			'\x42', '\x4D', '\xF6', '\x3C', '\x00', '\x00', '\x00',
+			'\x00', '\x00', '\x00', '\x36', '\x00', '\x00', '\x00', '\x28', '\x00', '\x00', '\x00', '\x48', '\x00',
+			'\x00', '\x00', '\x48', '\x00', '\x00', '\x00', '\x01', '\x00', '\x18', '\x00', '\x00', '\x00', '\x00',
+			'\x00', '\xC0', '\x3C', '\x00', '\x00', '\xC4', '\x0E', '\x00', '\x00', '\xC4', '\x0E', '\x00', '\x00',
+			'\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00'}
 
 		for row := 0; row < sd.config.ButtonSize; row++ {
 			for line := sd.config.ButtonSize - 1; line >= 0; line-- {
@@ -281,8 +286,8 @@ func (sd *StreamDeck) FillImage(btnIndex int, img image.Image) error {
 		buf := make([]byte, 16+len(imgBuf))
 		buf[0] = 0x02
 		buf[1] = 0x01
-		buf[2] = 1 // page_number
-		buf[4] = 1 // last page
+		binary.LittleEndian.PutUint16(buf[2:], 1) // page_number
+		buf[4] = 1                                // last page
 		buf[5] = byte(btnIndex + 1)
 		copy(buf[16:], imgBuf)
 
