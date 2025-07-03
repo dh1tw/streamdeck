@@ -289,22 +289,12 @@ func (sd *StreamDeck) FillImage(btnIndex int, img image.Image) error {
 	defer sd.lock.Unlock()
 
 	if sd.config.ImageFormat == "bmp" {
-		buf := make([]byte, 16+len(imgBuf))
-		buf[0] = 0x02
-		buf[1] = 0x01
-		binary.LittleEndian.PutUint16(buf[2:], 1) // page_number
-		buf[4] = 1                                // last page
-		buf[5] = byte(sd.config.fixKey(btnIndex))
-		copy(buf[16:], imgBuf)
-
-		n, err := sd.device.Write(buf)
+		err := sd.sendOriginalSingleMsgInLock(btnIndex, 1, imgBuf[0:7776])
 		if err != nil {
 			return err
 		}
-		if n != len(buf) {
-			return fmt.Errorf("only wrote %d of %d", n, len(buf))
-		}
-		return nil
+
+		return sd.sendOriginalSingleMsgInLock(btnIndex, 2, imgBuf[7776:])
 	}
 
 	headerSize := 8
@@ -347,6 +337,27 @@ func (sd *StreamDeck) FillImage(btnIndex int, img image.Image) error {
 
 	}
 
+	return nil
+}
+
+func (sd *StreamDeck) sendOriginalSingleMsgInLock(btnIndex int, pageNumber uint16, data []byte) error {
+	buf := make([]byte, 8191)
+	buf[0] = 0x02
+	buf[1] = 0x01
+	binary.LittleEndian.PutUint16(buf[2:], pageNumber)
+	if pageNumber == 2 {
+		buf[4] = 1
+	}
+	buf[5] = byte(sd.config.fixKey(btnIndex))
+	copy(buf[16:], data)
+
+	n, err := sd.device.Write(buf)
+	if err != nil {
+		return err
+	}
+	if n != len(buf) {
+		return fmt.Errorf("only wrote %d of %d", n, len(buf))
+	}
 	return nil
 }
 
