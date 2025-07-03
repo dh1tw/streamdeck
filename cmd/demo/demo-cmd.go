@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"image/color"
 	"log"
 	"time"
@@ -16,7 +17,11 @@ func main() {
 }
 
 func realMain() error {
-	sd, err := streamdeck.NewStreamDeck(streamdeck.Plus)
+	c, found := streamdeck.FindConnectedConfig()
+	if !found {
+		return fmt.Errorf("no streamdec")
+	}
+	sd, err := streamdeck.NewStreamDeck(c)
 	if err != nil {
 		return err
 	}

@@ -1,5 +1,9 @@
 package streamdeck
 
+import (
+	"github.com/bearsh/hid"
+)
+
 type Config struct {
 	ProductID        uint16 // ProductID is the USB ProductID
 	NumButtonColumns int
@@ -60,4 +64,16 @@ var Plus = Config{
 	Spacer:           19,
 	ButtonSize:       120,
 	ImageFormat:      "jpg",
+}
+
+var AllConfigs = []Config{Original, Original2, Plus}
+
+func FindConnectedConfig() (Config, bool) {
+	for _, c := range AllConfigs {
+		devices := hid.Enumerate(VendorID, c.ProductID)
+		if len(devices) > 0 {
+			return c, true
+		}
+	}
+	return Config{}, false
 }

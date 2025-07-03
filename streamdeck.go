@@ -260,7 +260,7 @@ func encodeBMP(c Config, img image.Image) ([]byte, error) {
 	for row := 0; row < c.ButtonSize; row++ {
 		for line := c.ButtonSize - 1; line >= 0; line-- {
 			r, g, b, _ := img.At(line, row).RGBA()
-			imgBuf = append(imgBuf, byte(r), byte(b), byte(g))
+			imgBuf = append(imgBuf, byte(b), byte(g), byte(r))
 		}
 	}
 	return imgBuf, nil
@@ -500,7 +500,7 @@ func resize(img image.Image, width, height int) *image.RGBA {
 		gift.Resize(width, height, gift.LanczosResampling),
 		gift.UnsharpMask(1, 1, 0),
 	)
-	res := image.NewRGBA(g.Bounds(img.Bounds()))
+	res := image.NewRGBA(g.Bounds(image.Rect(0, 0, width, height)))
 	g.Draw(res, img)
 	return res
 }
