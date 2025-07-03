@@ -8,6 +8,7 @@ type Config struct {
 	ButtonSize       int
 	ImageFormat      string
 	ImageRotate      bool
+	ConvertKey       bool
 }
 
 func (c Config) NumButtons() int {
@@ -24,6 +25,14 @@ func (c *Config) PanelHeight() int {
 	return c.NumButtonRows*c.ButtonSize + c.Spacer*(c.NumButtonRows-1)
 }
 
+func (c *Config) fixKey(key int) int {
+	if c.ConvertKey {
+		keyCol := key % c.NumButtonColumns
+		return 1 + ((key - keyCol) + ((c.NumButtonColumns - 1) - keyCol))
+	}
+	return key
+}
+
 var Original = Config{
 	ProductID:        0x60,
 	NumButtonColumns: 5,
@@ -31,6 +40,7 @@ var Original = Config{
 	Spacer:           19,
 	ButtonSize:       72,
 	ImageFormat:      "bmp",
+	ConvertKey:       true,
 }
 
 var Original2 = Config{

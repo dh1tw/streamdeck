@@ -288,7 +288,7 @@ func (sd *StreamDeck) FillImage(btnIndex int, img image.Image) error {
 		buf[1] = 0x01
 		binary.LittleEndian.PutUint16(buf[2:], 1) // page_number
 		buf[4] = 1                                // last page
-		buf[5] = byte(btnIndex + 1)
+		buf[5] = byte(sd.config.fixKey(btnIndex))
 		copy(buf[16:], imgBuf)
 
 		n, err := sd.device.Write(buf)
@@ -314,7 +314,7 @@ func (sd *StreamDeck) FillImage(btnIndex int, img image.Image) error {
 
 		buf[0] = 0x02
 		buf[1] = 0x07
-		buf[2] = byte(btnIndex)
+		buf[2] = byte(sd.config.fixKey(btnIndex))
 		if bytesLeft == 0 {
 			buf[3] = 1
 		} else {
