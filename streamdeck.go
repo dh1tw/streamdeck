@@ -231,20 +231,7 @@ func (sd *StreamDeck) encodeImage(img image.Image) ([]byte, error) {
 	}
 
 	if sd.config.ImageFormat == "bmp" {
-		imgBuf := []byte{
-			'\x42', '\x4D', '\xF6', '\x3C', '\x00', '\x00', '\x00',
-			'\x00', '\x00', '\x00', '\x36', '\x00', '\x00', '\x00', '\x28', '\x00', '\x00', '\x00', '\x48', '\x00',
-			'\x00', '\x00', '\x48', '\x00', '\x00', '\x00', '\x01', '\x00', '\x18', '\x00', '\x00', '\x00', '\x00',
-			'\x00', '\xC0', '\x3C', '\x00', '\x00', '\xC4', '\x0E', '\x00', '\x00', '\xC4', '\x0E', '\x00', '\x00',
-			'\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00'}
-
-		for row := 0; row < sd.config.ButtonSize; row++ {
-			for line := sd.config.ButtonSize - 1; line >= 0; line-- {
-				r, g, b, _ := img.At(line, row).RGBA()
-				imgBuf = append(imgBuf, byte(r), byte(b), byte(g))
-			}
-		}
-		return imgBuf, nil
+		return encodeBMP(sd.config, img)
 	}
 
 	if sd.config.ImageFormat == "jpg" {
@@ -258,6 +245,25 @@ func (sd *StreamDeck) encodeImage(img image.Image) ([]byte, error) {
 
 	return nil, fmt.Errorf("unknown image format [%s]", sd.config.ImageFormat)
 
+}
+
+func encodeBMP(c Config, img image.Image) ([]byte, error) {
+	imgBuf := []byte{
+		'\x42', '\x4D', '\xF6', '\x3C', '\x00', '\x00', '\x00', '\x00',
+		'\x00', '\x00', '\x36', '\x00', '\x00', '\x00', '\x28', '\x00',
+		'\x00', '\x00', '\x48', '\x00', '\x00', '\x00', '\x48', '\x00',
+		'\x00', '\x00', '\x01', '\x00', '\x18', '\x00', '\x00', '\x00',
+		'\x00', '\x00', '\xC0', '\x3C', '\x00', '\x00', '\xC4', '\x0E',
+		'\x00', '\x00', '\xC4', '\x0E', '\x00', '\x00', '\x00', '\x00',
+		'\x00', '\x00', '\x00', '\x00', '\x00', '\x00'}
+
+	for row := 0; row < c.ButtonSize; row++ {
+		for line := c.ButtonSize - 1; line >= 0; line-- {
+			r, g, b, _ := img.At(line, row).RGBA()
+			imgBuf = append(imgBuf, byte(r), byte(b), byte(g))
+		}
+	}
+	return imgBuf, nil
 }
 
 // FillImage fills the given key with an image. For best performance, provide
