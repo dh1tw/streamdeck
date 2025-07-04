@@ -289,12 +289,13 @@ func (sd *StreamDeck) FillImage(btnIndex int, img image.Image) error {
 	defer sd.lock.Unlock()
 
 	if sd.config.ImageFormat == "bmp" {
-		err := sd.sendOriginalSingleMsgInLock(btnIndex, 1, imgBuf[0:7776])
+		splitPoint := 7803
+		err := sd.sendOriginalSingleMsgInLock(btnIndex, 1, imgBuf[0:splitPoint])
 		if err != nil {
 			return err
 		}
 
-		return sd.sendOriginalSingleMsgInLock(btnIndex, 2, imgBuf[7776:])
+		return sd.sendOriginalSingleMsgInLock(btnIndex, 2, imgBuf[splitPoint:])
 	}
 
 	headerSize := 8
