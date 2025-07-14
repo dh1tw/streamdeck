@@ -54,6 +54,11 @@ func (s *State) Update(c *Config, b []byte) (Event, error) {
 		return Event{}, fmt.Errorf("why isn't it starting with 1, %v", b)
 	}
 
+	// see https://github.com/dh1tw/streamdeck/pull/9#discussion_r2187628307
+	if c != nil && c.ConvertKey {
+		return s.updateKeyPressOriginal(b[1:])
+	}
+
 	switch b[1] {
 	case 0:
 		return s.updateKeyPress(b[4:])
@@ -87,6 +92,18 @@ func applyBools(in []bool, data []byte) (int, []bool) {
 		}
 	}
 	return changed, in
+}
+
+func (s *State) updateKeyPressOriginal(data []byte) (Event, error) {
+	var changed int
+	changed, s.Keys = applyBools(s.Keys, data)
+	if changed >= 0 {
+		if s.Keys[changed] {
+			return Event{EventKeyPressed, changed}, nil
+		}
+		return Event{EventKeyReleased, changed}, nil
+	}
+	return Event{EventUnknown, changed}, nil
 }
 
 func (s *State) updateKeyPress(data []byte) (Event, error) {

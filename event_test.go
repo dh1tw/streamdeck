@@ -72,3 +72,22 @@ func TestState(t *testing.T) {
 func TestEventString(t *testing.T) {
 	test.That(t, Event{EventDialPressed, 5}.String(), test.ShouldEqual, "dial-push:5")
 }
+
+func TestStateOriginal(t *testing.T) {
+	s := State{}
+
+	// button 0
+	myEvent, err := s.Update(&Original, []byte{1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0})
+	t.Logf("myEvent 1: %v", myEvent)
+	test.That(t, err, test.ShouldBeNil)
+	test.That(t, s.Keys[0], test.ShouldBeTrue)
+	test.That(t, s.Keys[1], test.ShouldBeFalse)
+	test.That(t, myEvent.String(), test.ShouldEqual, "key-push:0")
+
+	myEvent, err = s.Update(&Original, []byte{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0})
+	t.Logf("myEvent 2: %v", myEvent)
+	test.That(t, err, test.ShouldBeNil)
+	test.That(t, s.Keys[0], test.ShouldBeFalse)
+	test.That(t, s.Keys[1], test.ShouldBeFalse)
+	test.That(t, myEvent.String(), test.ShouldEqual, "key-unpush:0")
+}
