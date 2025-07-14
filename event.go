@@ -10,22 +10,22 @@ type EventKind int
 
 const (
 	EventUnknown = iota
-	EventKeyPush
-	EventKeyUnpush
-	EventDialPush
-	EventDialUnpush
+	EventKeyPressed
+	EventKeyReleased
+	EventDialPressed
+	EventDialReleased
 	EventDialTurn
 )
 
 func (ev EventKind) String() string {
 	switch ev {
-	case EventKeyPush:
+	case EventKeyPressed:
 		return "key-push"
-	case EventKeyUnpush:
+	case EventKeyReleased:
 		return "key-unpush"
-	case EventDialPush:
+	case EventDialPressed:
 		return "dial-push"
-	case EventDialUnpush:
+	case EventDialReleased:
 		return "dial-unpush"
 	case EventDialTurn:
 		return "dial-turn"
@@ -94,9 +94,9 @@ func (s *State) updateKeyPress(data []byte) (Event, error) {
 	changed, s.Keys = applyBools(s.Keys, data)
 	if changed >= 0 {
 		if s.Keys[changed] {
-			return Event{EventKeyPush, changed}, nil
+			return Event{EventKeyPressed, changed}, nil
 		}
-		return Event{EventKeyUnpush, changed}, nil
+		return Event{EventKeyReleased, changed}, nil
 	}
 	return Event{EventUnknown, changed}, nil
 }
@@ -106,9 +106,9 @@ func (s *State) updateDialPush(data []byte) (Event, error) {
 	changed, s.DialPush = applyBools(s.DialPush, data)
 	if changed >= 0 {
 		if s.DialPush[changed] {
-			return Event{EventDialPush, changed}, nil
+			return Event{EventDialPressed, changed}, nil
 		}
-		return Event{EventDialUnpush, changed}, nil
+		return Event{EventDialReleased, changed}, nil
 	}
 	return Event{EventUnknown, changed}, nil
 }

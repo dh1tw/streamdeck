@@ -70,5 +70,5 @@ func TestState(t *testing.T) {
 }
 
 func TestEventString(t *testing.T) {
-	test.That(t, Event{EventDialPush, 5}.String(), test.ShouldEqual, "dial-push:5")
+	test.That(t, Event{EventDialPressed, 5}.String(), test.ShouldEqual, "dial-push:5")
 }
