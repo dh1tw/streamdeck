@@ -45,7 +45,7 @@ type StreamDeck struct {
 	lock       sync.Mutex
 	device     *hid.Device
 	btnEventCb BtnEvent
-	config     Config
+	Config     Config
 
 	waitGroup sync.WaitGroup
 	cancel    context.CancelFunc
@@ -112,7 +112,7 @@ func NewStreamDeck(c Config, serial ...string) (*StreamDeck, error) {
 
 	sd := &StreamDeck{
 		device: device,
-		config: c,
+		Config: c,
 	}
 
 	sd.ClearAllBtns()
@@ -191,7 +191,7 @@ func (sd *StreamDeck) ClearBtn(btnIndex int) error {
 
 // ClearAllBtns fills all keys with the color black
 func (sd *StreamDeck) ClearAllBtns() error {
-	for i := sd.config.NumButtons() - 1; i >= 0; i-- {
+	for i := sd.Config.NumButtons() - 1; i >= 0; i-- {
 		err := sd.ClearBtn(i)
 		if err != nil {
 			return err
@@ -212,7 +212,7 @@ func (sd *StreamDeck) FillColor(btnIndex, r, g, b int) error {
 		return err
 	}
 
-	img := image.NewRGBA(image.Rect(0, 0, sd.config.ButtonSize, sd.config.ButtonSize))
+	img := image.NewRGBA(image.Rect(0, 0, sd.Config.ButtonSize, sd.Config.ButtonSize))
 	color := color.RGBA{uint8(r), uint8(g), uint8(b), 1}
 	draw.Draw(img, img.Bounds(), image.NewUniform(color), image.Point{0, 0}, draw.Src)
 
@@ -220,21 +220,21 @@ func (sd *StreamDeck) FillColor(btnIndex, r, g, b int) error {
 }
 
 func (sd *StreamDeck) encodeImage(img image.Image) ([]byte, error) {
-	if sd.config.ImageRotate {
+	if sd.Config.ImageRotate {
 		newImage := image.NewRGBA(img.Bounds())
-		for x := 0; x < sd.config.ButtonSize; x++ {
-			for y := 0; y < sd.config.ButtonSize; y++ {
-				newImage.Set(x, y, img.At(sd.config.ButtonSize-x, sd.config.ButtonSize-y))
+		for x := 0; x < sd.Config.ButtonSize; x++ {
+			for y := 0; y < sd.Config.ButtonSize; y++ {
+				newImage.Set(x, y, img.At(sd.Config.ButtonSize-x, sd.Config.ButtonSize-y))
 			}
 		}
 		img = newImage
 	}
 
-	if sd.config.ImageFormat == "bmp" {
-		return encodeBMP(sd.config, img)
+	if sd.Config.ImageFormat == "bmp" {
+		return encodeBMP(sd.Config, img)
 	}
 
-	if sd.config.ImageFormat == "jpg" {
+	if sd.Config.ImageFormat == "jpg" {
 		buf := bytes.Buffer{}
 		err := jpeg.Encode(&buf, img, nil)
 		if err != nil {
@@ -243,7 +243,7 @@ func (sd *StreamDeck) encodeImage(img image.Image) ([]byte, error) {
 		return buf.Bytes(), nil
 	}
 
-	return nil, fmt.Errorf("unknown image format [%s]", sd.config.ImageFormat)
+	return nil, fmt.Errorf("unknown image format [%s]", sd.Config.ImageFormat)
 
 }
 
@@ -276,8 +276,8 @@ func (sd *StreamDeck) FillImage(btnIndex int, img image.Image) error {
 
 	// if necessary, rescale the picture
 	rect := img.Bounds()
-	if rect.Dx() != sd.config.ButtonSize {
-		img = resize(img, sd.config.ButtonSize, sd.config.ButtonSize)
+	if rect.Dx() != sd.Config.ButtonSize {
+		img = resize(img, sd.Config.ButtonSize, sd.Config.ButtonSize)
 	}
 
 	imgBuf, err := sd.encodeImage(img)
@@ -288,7 +288,7 @@ func (sd *StreamDeck) FillImage(btnIndex int, img image.Image) error {
 	sd.lock.Lock()
 	defer sd.lock.Unlock()
 
-	if sd.config.ImageFormat == "bmp" {
+	if sd.Config.ImageFormat == "bmp" {
 		splitPoint := 7803
 		err := sd.sendOriginalSingleMsgInLock(btnIndex, 1, imgBuf[0:splitPoint])
 		if err != nil {
@@ -311,7 +311,7 @@ func (sd *StreamDeck) FillImage(btnIndex int, img image.Image) error {
 
 		buf[0] = 0x02
 		buf[1] = 0x07
-		buf[2] = byte(sd.config.fixKey(btnIndex))
+		buf[2] = byte(sd.Config.fixKey(btnIndex))
 		if bytesLeft == 0 {
 			buf[3] = 1
 		} else {
@@ -349,7 +349,7 @@ func (sd *StreamDeck) sendOriginalSingleMsgInLock(btnIndex int, pageNumber uint1
 	if pageNumber == 2 {
 		buf[4] = 1
 	}
-	buf[5] = byte(sd.config.fixKey(btnIndex))
+	buf[5] = byte(sd.Config.fixKey(btnIndex))
 	copy(buf[16:], data)
 
 	n, err := sd.device.Write(buf)
@@ -384,30 +384,30 @@ func (sd *StreamDeck) FillPanel(img image.Image) error {
 
 	// resize if the picture width is larger or smaller than panel
 	rect := img.Bounds()
-	if rect.Dx() != sd.config.PanelWidth() {
-		newWidthRatio := float32(rect.Dx()) / float32((sd.config.PanelWidth()))
-		img = resize(img, sd.config.PanelWidth(), int(float32(rect.Dy())/newWidthRatio))
+	if rect.Dx() != sd.Config.PanelWidth() {
+		newWidthRatio := float32(rect.Dx()) / float32((sd.Config.PanelWidth()))
+		img = resize(img, sd.Config.PanelWidth(), int(float32(rect.Dy())/newWidthRatio))
 	}
 
-	// if the Canvas is larger than sd.config.PanelWidth() x sd.config.PanelHeight() then we crop
-	// the Center match sd.config.PanelWidth() x sd.config.PanelHeight()
+	// if the Canvas is larger than sd.Config.PanelWidth() x sd.Config.PanelHeight() then we crop
+	// the Center match sd.Config.PanelWidth() x sd.Config.PanelHeight()
 	rect = img.Bounds()
-	if rect.Dx() > sd.config.PanelWidth() || rect.Dy() > sd.config.PanelHeight() {
-		img = cropCenter(img, sd.config.PanelWidth(), sd.config.PanelHeight())
+	if rect.Dx() > sd.Config.PanelWidth() || rect.Dy() > sd.Config.PanelHeight() {
+		img = cropCenter(img, sd.Config.PanelWidth(), sd.Config.PanelHeight())
 	}
 
 	counter := 0
 
-	for row := 0; row < sd.config.NumButtonRows; row++ {
-		for col := 0; col < sd.config.NumButtonColumns; col++ {
+	for row := 0; row < sd.Config.NumButtonRows; row++ {
+		for col := 0; col < sd.Config.NumButtonColumns; col++ {
 			rect := image.Rectangle{
 				Min: image.Point{
-					sd.config.PanelWidth() - sd.config.ButtonSize - col*sd.config.ButtonSize - col*sd.config.Spacer,
-					row*sd.config.ButtonSize + row*sd.config.Spacer,
+					sd.Config.PanelWidth() - sd.Config.ButtonSize - col*sd.Config.ButtonSize - col*sd.Config.Spacer,
+					row*sd.Config.ButtonSize + row*sd.Config.Spacer,
 				},
 				Max: image.Point{
-					sd.config.PanelWidth() - 1 - col*sd.config.ButtonSize - col*sd.config.Spacer,
-					sd.config.ButtonSize - 1 + row*sd.config.ButtonSize + row*sd.config.Spacer,
+					sd.Config.PanelWidth() - 1 - col*sd.Config.ButtonSize - col*sd.Config.Spacer,
+					sd.Config.ButtonSize - 1 + row*sd.Config.ButtonSize + row*sd.Config.Spacer,
 				},
 			}
 			sd.FillImage(counter, img.(*image.RGBA).SubImage(rect))
@@ -442,7 +442,7 @@ func (sd *StreamDeck) WriteText(btnIndex int, textBtn TextButton) error {
 		return err
 	}
 
-	img := image.NewRGBA(image.Rect(0, 0, sd.config.ButtonSize, sd.config.ButtonSize))
+	img := image.NewRGBA(image.Rect(0, 0, sd.Config.ButtonSize, sd.Config.ButtonSize))
 	bg := image.NewUniform(textBtn.BgColor)
 	// fill button with Background color
 	draw.Draw(img, img.Bounds(), bg, image.Point{0, 0}, draw.Src)
@@ -453,7 +453,7 @@ func (sd *StreamDeck) WriteText(btnIndex int, textBtn TextButton) error {
 // WriteText can write several lines of Text to a button. It is up to the
 // user to ensure that the lines fit properly on the button.
 func (sd *StreamDeck) WriteTextOnImage(btnIndex int, imgIn image.Image, lines []TextLine) error {
-	img := resize(imgIn, sd.config.ButtonSize, sd.config.ButtonSize)
+	img := resize(imgIn, sd.Config.ButtonSize, sd.Config.ButtonSize)
 
 	for _, line := range lines {
 		if line.Font == nil {
@@ -479,7 +479,7 @@ func (sd *StreamDeck) WriteTextOnImage(btnIndex int, imgIn image.Image, lines []
 
 // checkValidKeyIndex checks that the keyIndex is valid
 func (sd *StreamDeck) checkValidKeyIndex(keyIndex int) error {
-	if keyIndex < 0 || keyIndex > sd.config.NumButtons() {
+	if keyIndex < 0 || keyIndex > sd.Config.NumButtons() {
 		return fmt.Errorf("invalid key index")
 	}
 	return nil
