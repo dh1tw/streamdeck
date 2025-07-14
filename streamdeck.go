@@ -45,7 +45,7 @@ type StreamDeck struct {
 	lock       sync.Mutex
 	device     *hid.Device
 	btnEventCb BtnEvent
-	Config     Config
+	Config     *Config
 
 	waitGroup sync.WaitGroup
 	cancel    context.CancelFunc
@@ -116,7 +116,7 @@ func NewStreamDeck(c *Config, serial *string) (*StreamDeck, error) {
 
 	sd := &StreamDeck{
 		device: device,
-		Config: *c,
+		Config: c,
 	}
 
 	sd.ClearAllBtns()
@@ -151,7 +151,7 @@ func (sd *StreamDeck) read(ctx context.Context) {
 			continue
 		}
 
-		event, err := myState.Update(data)
+		event, err := myState.Update(sd.Config, data)
 		if err != nil {
 			fmt.Println(err)
 			continue
@@ -251,7 +251,7 @@ func (sd *StreamDeck) encodeImage(img image.Image) ([]byte, error) {
 
 }
 
-func encodeBMP(c Config, img image.Image) ([]byte, error) {
+func encodeBMP(c *Config, img image.Image) ([]byte, error) {
 	imgBuf := []byte{
 		'\x42', '\x4D', '\xF6', '\x3C', '\x00', '\x00', '\x00', '\x00',
 		'\x00', '\x00', '\x36', '\x00', '\x00', '\x00', '\x28', '\x00',

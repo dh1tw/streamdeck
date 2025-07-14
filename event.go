@@ -49,7 +49,7 @@ type State struct {
 	DialPos  []int // 0 -> 100
 }
 
-func (s *State) Update(b []byte) (Event, error) {
+func (s *State) Update(c *Config, b []byte) (Event, error) {
 	if b[0] != 1 {
 		return Event{}, fmt.Errorf("why isn't it starting with 1, %v", b)
 	}

@@ -21,7 +21,7 @@ func TestRGB(t *testing.T) {
 	color := color.RGBA{uint8(255), uint8(0), uint8(0), 1}
 	draw.Draw(img, img.Bounds(), image.NewUniform(color), image.Point{0, 0}, draw.Src)
 
-	data, err := encodeBMP(Original, img)
+	data, err := encodeBMP(&Original, img)
 	test.That(t, err, test.ShouldBeNil)
 
 	test.That(t, len(data), test.ShouldEqual, 54+(72*72*3))
