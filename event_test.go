@@ -19,13 +19,13 @@ func TestState(t *testing.T) {
 	test.That(t, err, test.ShouldBeNil)
 	test.That(t, s.Keys[0], test.ShouldBeFalse)
 	test.That(t, s.Keys[1], test.ShouldBeFalse)
-	test.That(t, myEvent.String(), test.ShouldEqual, "key-unpush:0")
+	test.That(t, myEvent.String(), test.ShouldEqual, "key-released:0")
 
 	myEvent, err = s.Update(nil, []byte{1, 0, 8, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0})
 	test.That(t, err, test.ShouldBeNil)
 	test.That(t, s.Keys[0], test.ShouldBeFalse)
 	test.That(t, s.Keys[1], test.ShouldBeTrue)
-	test.That(t, myEvent.String(), test.ShouldEqual, "key-push:1")
+	test.That(t, myEvent.String(), test.ShouldEqual, "key-pressed:1")
 
 	// dial turns
 	myEvent, err = s.Update(nil, []byte{1, 3, 5, 0, 1, 2})
@@ -60,17 +60,17 @@ func TestState(t *testing.T) {
 	myEvent, err = s.Update(nil, []byte{1, 3, 5, 0, 0, 1})
 	test.That(t, err, test.ShouldBeNil)
 	test.That(t, s.DialPush[0], test.ShouldBeTrue)
-	test.That(t, myEvent.String(), test.ShouldEqual, "dial-push:0")
+	test.That(t, myEvent.String(), test.ShouldEqual, "dial-pressed:0")
 
 	myEvent, err = s.Update(nil, []byte{1, 3, 5, 0, 0, 0})
 	test.That(t, err, test.ShouldBeNil)
 	test.That(t, s.DialPush[0], test.ShouldBeFalse)
-	test.That(t, myEvent.String(), test.ShouldEqual, "dial-unpush:0")
+	test.That(t, myEvent.String(), test.ShouldEqual, "dial-released:0")
 
 }
 
 func TestEventString(t *testing.T) {
-	test.That(t, Event{EventDialPressed, 5}.String(), test.ShouldEqual, "dial-push:5")
+	test.That(t, Event{EventDialPressed, 5}.String(), test.ShouldEqual, "dial-pressed:5")
 }
 
 func TestStateOriginal(t *testing.T) {
@@ -82,12 +82,12 @@ func TestStateOriginal(t *testing.T) {
 	test.That(t, err, test.ShouldBeNil)
 	test.That(t, s.Keys[0], test.ShouldBeTrue)
 	test.That(t, s.Keys[1], test.ShouldBeFalse)
-	test.That(t, myEvent.String(), test.ShouldEqual, "key-push:0")
+	test.That(t, myEvent.String(), test.ShouldEqual, "key-pressed:0")
 
 	myEvent, err = s.Update(&Original, []byte{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0})
 	t.Logf("myEvent 2: %v", myEvent)
 	test.That(t, err, test.ShouldBeNil)
 	test.That(t, s.Keys[0], test.ShouldBeFalse)
 	test.That(t, s.Keys[1], test.ShouldBeFalse)
-	test.That(t, myEvent.String(), test.ShouldEqual, "key-unpush:0")
+	test.That(t, myEvent.String(), test.ShouldEqual, "key-released:0")
 }

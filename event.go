@@ -20,13 +20,13 @@ const (
 func (ev EventKind) String() string {
 	switch ev {
 	case EventKeyPressed:
-		return "key-push"
+		return "key-pressed"
 	case EventKeyReleased:
-		return "key-unpush"
+		return "key-released"
 	case EventDialPressed:
-		return "dial-push"
+		return "dial-pressed"
 	case EventDialReleased:
-		return "dial-unpush"
+		return "dial-released"
 	case EventDialTurn:
 		return "dial-turn"
 	default:
