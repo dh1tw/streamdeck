@@ -73,7 +73,18 @@ type TextLine struct {
 // the optional serial number of the Device. In the examples folder there is
 // a small program which enumerates all available Stream Decks. If no serial number
 // is supplied, the first StreamDeck found will be selected.
-func NewStreamDeck(c *Config, serial *string) (*StreamDeck, error) {
+func NewStreamDeck(serial ...string) (*StreamDeck, error) {
+
+	s := ""
+	if len(serial) > 0 {
+		s = serial[0]
+	}
+
+	return NewStreamDeckWithConfig(nil, s)
+}
+
+// NewStreamDeckWithConfig is the constructor for a custom config.
+func NewStreamDeckWithConfig(c *Config, serial string) (*StreamDeck, error) {
 
 	if c == nil {
 		cc, found := FindConnectedConfig()
@@ -92,16 +103,16 @@ func NewStreamDeck(c *Config, serial *string) (*StreamDeck, error) {
 	log.Printf("Found %d StreamDecks", len(devices))
 
 	id := 0
-	if serial != nil {
+	if serial != "" {
 		found := false
 		for i, d := range devices {
-			if d.Serial == *serial {
+			if d.Serial == serial {
 				id = i
 				found = true
 			}
 		}
 		if !found {
-			return nil, fmt.Errorf("no stream deck device found with serial number %s", *serial)
+			return nil, fmt.Errorf("no stream deck device found with serial number %s", serial)
 		}
 	}
 
