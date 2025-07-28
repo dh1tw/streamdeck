@@ -80,14 +80,28 @@ func TestStateOriginal(t *testing.T) {
 	myEvent, err := s.Update(&Original, []byte{1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0})
 	t.Logf("myEvent 1: %v", myEvent)
 	test.That(t, err, test.ShouldBeNil)
-	test.That(t, s.Keys[0], test.ShouldBeTrue)
+	test.That(t, s.Keys[0], test.ShouldBeFalse)
 	test.That(t, s.Keys[1], test.ShouldBeFalse)
-	test.That(t, myEvent.String(), test.ShouldEqual, "key-pressed:0")
+	test.That(t, s.Keys[4], test.ShouldBeTrue)
+	test.That(t, myEvent.String(), test.ShouldEqual, "key-pressed:4")
 
 	myEvent, err = s.Update(&Original, []byte{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0})
 	t.Logf("myEvent 2: %v", myEvent)
 	test.That(t, err, test.ShouldBeNil)
 	test.That(t, s.Keys[0], test.ShouldBeFalse)
 	test.That(t, s.Keys[1], test.ShouldBeFalse)
-	test.That(t, myEvent.String(), test.ShouldEqual, "key-released:0")
+	test.That(t, myEvent.String(), test.ShouldEqual, "key-released:4")
+
+	// button 10
+	myEvent, err = s.Update(&Original, []byte{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
+	t.Logf("myEvent 2: %v", myEvent)
+	test.That(t, err, test.ShouldBeNil)
+	test.That(t, myEvent.String(), test.ShouldEqual, "key-pressed:10")
+
+	// button 14
+	myEvent, err = s.Update(&Original, []byte{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0})
+	t.Logf("myEvent 3: %v", myEvent)
+	test.That(t, err, test.ShouldBeNil)
+	test.That(t, myEvent.String(), test.ShouldEqual, "key-pressed:14")
+
 }

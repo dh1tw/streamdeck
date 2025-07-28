@@ -96,7 +96,18 @@ func applyBools(in []bool, data []byte) (int, []bool) {
 
 func (s *State) updateKeyPressOriginal(data []byte) (Event, error) {
 	var changed int
-	changed, s.Keys = applyBools(s.Keys, data)
+
+	if len(data) < 15 {
+		return Event{}, fmt.Errorf("wrong amount of data for updateKeyPressOriginal %d", len(data))
+	}
+	nd := make([]byte, 15)
+	for x := 0; x < 3; x++ {
+		for y := 0; y < 5; y++ {
+			nd[(x*5)+y] = data[(x*5)+4-y]
+		}
+	}
+
+	changed, s.Keys = applyBools(s.Keys, nd)
 	if changed >= 0 {
 		if s.Keys[changed] {
 			return Event{EventKeyPressed, changed}, nil
