@@ -425,7 +425,7 @@ func (sd *StreamDeck) FillPanel(img image.Image) error {
 					sd.Config.ButtonSize - 1 + row*sd.Config.ButtonSize + row*sd.Config.Spacer,
 				},
 			}
-			sd.FillImage(counter, img.(*image.RGBA).SubImage(rect))
+			sd.FillImage(sd.Config.fixKey(counter), img.(*image.RGBA).SubImage(rect))
 			counter++
 		}
 	}
