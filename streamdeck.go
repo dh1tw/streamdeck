@@ -236,10 +236,11 @@ func (sd *StreamDeck) FillColor(btnIndex, r, g, b int) error {
 
 func (sd *StreamDeck) encodeImage(img image.Image) ([]byte, error) {
 	if sd.Config.ImageRotate {
-		newImage := image.NewRGBA(img.Bounds())
+		b := img.Bounds()
+		newImage := image.NewRGBA(image.Rect(0, 0, sd.Config.ButtonSize, sd.Config.ButtonSize))
 		for x := 0; x < sd.Config.ButtonSize; x++ {
 			for y := 0; y < sd.Config.ButtonSize; y++ {
-				newImage.Set(x, y, img.At(sd.Config.ButtonSize-x, sd.Config.ButtonSize-y))
+				newImage.Set(x, y, img.At(b.Min.X+sd.Config.ButtonSize-x, b.Min.Y+sd.Config.ButtonSize-y))
 			}
 		}
 		img = newImage
@@ -417,15 +418,16 @@ func (sd *StreamDeck) FillPanel(img image.Image) error {
 		for col := 0; col < sd.Config.NumButtonColumns; col++ {
 			rect := image.Rectangle{
 				Min: image.Point{
-					sd.Config.PanelWidth() - sd.Config.ButtonSize - col*sd.Config.ButtonSize - col*sd.Config.Spacer,
-					row*sd.Config.ButtonSize + row*sd.Config.Spacer,
+					X: col*sd.Config.ButtonSize + col*sd.Config.Spacer,
+					Y: row*sd.Config.ButtonSize + row*sd.Config.Spacer,
 				},
 				Max: image.Point{
-					sd.Config.PanelWidth() - 1 - col*sd.Config.ButtonSize - col*sd.Config.Spacer,
-					sd.Config.ButtonSize - 1 + row*sd.Config.ButtonSize + row*sd.Config.Spacer,
+					X: (1+col)*sd.Config.ButtonSize + col*sd.Config.Spacer,
+					Y: (1+row)*sd.Config.ButtonSize + row*sd.Config.Spacer,
 				},
 			}
-			sd.FillImage(sd.Config.fixKey(counter), img.(*image.RGBA).SubImage(rect))
+			sub := img.(*image.RGBA).SubImage(rect)
+			sd.FillImage(counter, sub)
 			counter++
 		}
 	}
