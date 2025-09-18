@@ -154,6 +154,7 @@ func (sd *StreamDeck) SetBtnEventCb(ev BtnEvent) {
 func (sd *StreamDeck) read(ctx context.Context) {
 	defer sd.waitGroup.Done()
 	myState := State{}
+
 	for ctx.Err() == nil {
 		data := make([]byte, 24)
 		_, err := sd.device.Read(data)
@@ -162,22 +163,25 @@ func (sd *StreamDeck) read(ctx context.Context) {
 			continue
 		}
 
-		event, err := myState.Update(sd.Config, data)
+		fmt.Println("read data:", data)
+
+		events, err := myState.Update(sd.Config, data)
 		if err != nil {
 			fmt.Println(err)
 			continue
 		}
 
 		var cb BtnEvent
-
 		sd.lock.Lock()
 		cb = sd.btnEventCb
 		sd.lock.Unlock()
-
 		if cb != nil {
-			go func() {
-				cb(myState, event)
-			}()
+			for _, event := range events {
+				go func() {
+					fmt.Println("calling callback")
+					cb(myState, event)
+				}()
+			}
 		}
 	}
 }

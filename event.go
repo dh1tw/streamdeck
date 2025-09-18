@@ -49,9 +49,9 @@ type State struct {
 	DialPos  []int // 0 -> 100
 }
 
-func (s *State) Update(c *Config, b []byte) (Event, error) {
+func (s *State) Update(c *Config, b []byte) ([]Event, error) {
 	if b[0] != 1 {
-		return Event{}, fmt.Errorf("why isn't it starting with 1, %v", b)
+		return nil, fmt.Errorf("why isn't it starting with 1, %v", b)
 	}
 
 	// see https://github.com/dh1tw/streamdeck/pull/9#discussion_r2187628307
@@ -68,12 +68,12 @@ func (s *State) Update(c *Config, b []byte) (Event, error) {
 		}
 		return s.updateDialTurn(b[5:])
 	default:
-		return Event{}, fmt.Errorf("unknown event type %d", b[1])
+		return nil, fmt.Errorf("unknown event type %d", b[1])
 	}
 }
 
-func applyBools(in []bool, data []byte) (int, []bool) {
-	changed := -1
+func applyBools(in []bool, data []byte) ([]int, []bool) {
+	changed := []int{}
 	for i, b := range data {
 		if len(in) <= i {
 			in = append(in, false)
@@ -88,17 +88,18 @@ func applyBools(in []bool, data []byte) (int, []bool) {
 		}
 
 		if prev != in[i] {
-			changed = i
+			changed = append(changed, i)
 		}
 	}
 	return changed, in
 }
 
-func (s *State) updateKeyPressOriginal(data []byte) (Event, error) {
-	var changed int
+func (s *State) updateKeyPressOriginal(data []byte) ([]Event, error) {
+	changedKeys := []int{}
+	updateEvents := []Event{}
 
 	if len(data) < 15 {
-		return Event{}, fmt.Errorf("wrong amount of data for updateKeyPressOriginal %d", len(data))
+		return nil, fmt.Errorf("wrong amount of data for updateKeyPressOriginal %d", len(data))
 	}
 	nd := make([]byte, 15)
 	for x := 0; x < 3; x++ {
@@ -107,47 +108,57 @@ func (s *State) updateKeyPressOriginal(data []byte) (Event, error) {
 		}
 	}
 
-	changed, s.Keys = applyBools(s.Keys, nd)
-	if changed >= 0 {
-		if s.Keys[changed] {
-			return Event{EventKeyPressed, changed}, nil
+	changedKeys, s.Keys = applyBools(s.Keys, nd)
+	for _, changedKey := range changedKeys {
+		if s.Keys[changedKey] {
+			updateEvents = append(updateEvents, Event{EventKeyPressed, changedKey})
+		} else {
+			updateEvents = append(updateEvents, Event{EventKeyReleased, changedKey})
 		}
-		return Event{EventKeyReleased, changed}, nil
 	}
-	return Event{EventUnknown, changed}, nil
+	return updateEvents, nil
 }
 
-func (s *State) updateKeyPress(data []byte) (Event, error) {
-	var changed int
-	changed, s.Keys = applyBools(s.Keys, data)
-	if changed >= 0 {
-		if s.Keys[changed] {
-			return Event{EventKeyPressed, changed}, nil
+func (s *State) updateKeyPress(data []byte) ([]Event, error) {
+	changedKeys := []int{}
+	updateEvents := []Event{}
+
+	changedKeys, s.Keys = applyBools(s.Keys, data)
+	for _, changedKey := range changedKeys {
+		if s.Keys[changedKey] {
+			updateEvents = append(updateEvents, Event{EventKeyPressed, changedKey})
+		} else {
+			updateEvents = append(updateEvents, Event{EventKeyReleased, changedKey})
 		}
-		return Event{EventKeyReleased, changed}, nil
 	}
-	return Event{EventUnknown, changed}, nil
+	return updateEvents, nil
 }
 
-func (s *State) updateDialPush(data []byte) (Event, error) {
-	var changed int
-	changed, s.DialPush = applyBools(s.DialPush, data)
-	if changed >= 0 {
-		if s.DialPush[changed] {
-			return Event{EventDialPressed, changed}, nil
+func (s *State) updateDialPush(data []byte) ([]Event, error) {
+	var changedDialPushs []int
+	changedDialPushs, s.DialPush = applyBools(s.DialPush, data)
+
+	updateEvents := []Event{}
+	for _, changedKey := range changedDialPushs {
+		if s.DialPush[changedKey] {
+			updateEvents = append(updateEvents, Event{EventDialPressed, changedKey})
+		} else {
+			updateEvents = append(updateEvents, Event{EventDialReleased, changedKey})
 		}
-		return Event{EventDialReleased, changed}, nil
 	}
-	return Event{EventUnknown, changed}, nil
+	return updateEvents, nil
 }
 
-func (s *State) updateDialTurn(data []byte) (Event, error) {
-	var changed int
-	changed, s.DialPos = applyDelta(s.DialPos, data)
-	if changed >= 0 {
-		return Event{EventDialTurn, changed}, nil
+func (s *State) updateDialTurn(data []byte) ([]Event, error) {
+	var changedDialTurns int
+	updateEvents := []Event{}
+	changedDialTurns, s.DialPos = applyDelta(s.DialPos, data)
+
+	if changedDialTurns >= 0 {
+		updateEvents = append(updateEvents, Event{EventDialTurn, changedDialTurns})
+		return updateEvents, nil
 	}
-	return Event{EventUnknown, changed}, nil
+	return nil, nil
 }
 
 func applyDelta(in []int, data []byte) (int, []int) {

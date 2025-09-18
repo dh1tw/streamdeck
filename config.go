@@ -37,6 +37,7 @@ func (c *Config) fixKey(key int) int {
 	return key
 }
 
+// Model 20GAA9901
 var Original = Config{
 	ProductID:        0x60,
 	NumButtonColumns: 5,
@@ -45,6 +46,17 @@ var Original = Config{
 	ButtonSize:       72,
 	ImageFormat:      "bmp",
 	ConvertKey:       true,
+}
+
+// Model 20GAA9902
+var OriginalMk1 = Config{
+	ProductID:        0x6d,
+	NumButtonColumns: 5,
+	NumButtonRows:    3,
+	Spacer:           19,
+	ButtonSize:       72,
+	ImageFormat:      "jpg",
+	ImageRotate:      true,
 }
 
 var Original2 = Config{
@@ -66,7 +78,7 @@ var Plus = Config{
 	ImageFormat:      "jpg",
 }
 
-var AllConfigs = []Config{Original, Original2, Plus}
+var AllConfigs = []Config{Original, OriginalMk1, Original2, Plus}
 
 func FindConnectedConfig() (Config, bool) {
 	for _, c := range AllConfigs {
