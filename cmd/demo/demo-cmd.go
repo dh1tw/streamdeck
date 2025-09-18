@@ -16,6 +16,7 @@ func main() {
 }
 
 func realMain() error {
+	// pick the first Stream Deck we find
 	sd, err := streamdeck.NewStreamDeck()
 	if err != nil {
 		return err
@@ -27,11 +28,13 @@ func realMain() error {
 		return err
 	}
 
+	// First button will be plain red
 	err = sd.FillColor(0, 255, 0, 0)
 	if err != nil {
 		return err
 	}
 
+	// Second button is green with red and blue text
 	err = sd.WriteText(1, streamdeck.TextButton{
 		Lines: []streamdeck.TextLine{
 			{Text: "foo", PosX: 10, PosY: 10, FontSize: 20, FontColor: color.RGBA{255, 0, 0, 255}},
@@ -43,6 +46,7 @@ func realMain() error {
 		return err
 	}
 
+	// capture Streamdeck events
 	sd.SetBtnEventCb(func(s streamdeck.State, e streamdeck.Event) {
 		log.Printf("got event: %v state: %v", e, s)
 	})
