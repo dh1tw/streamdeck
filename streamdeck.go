@@ -178,7 +178,6 @@ func (sd *StreamDeck) read(ctx context.Context) {
 		if cb != nil {
 			for _, event := range events {
 				go func() {
-					fmt.Println("calling callback")
 					cb(myState, event)
 				}()
 			}
