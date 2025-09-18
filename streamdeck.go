@@ -235,21 +235,23 @@ func (sd *StreamDeck) FillColor(btnIndex, r, g, b int) error {
 }
 
 func (sd *StreamDeck) encodeImage(img image.Image) ([]byte, error) {
+
 	if sd.Config.ImageRotate {
-		b := img.Bounds()
-		newImage := image.NewRGBA(image.Rect(0, 0, sd.Config.ButtonSize, sd.Config.ButtonSize))
+		newImage := image.NewRGBA(img.Bounds())
 		for x := 0; x < sd.Config.ButtonSize; x++ {
 			for y := 0; y < sd.Config.ButtonSize; y++ {
-				newImage.Set(x, y, img.At(b.Min.X+sd.Config.ButtonSize-x, b.Min.Y+sd.Config.ButtonSize-y))
+				newImage.Set(x, y, img.At(sd.Config.ButtonSize-x, sd.Config.ButtonSize-y))
 			}
 		}
 		img = newImage
 	}
 
+	// the original Stream Deck only supports BMP
 	if sd.Config.ImageFormat == "bmp" {
 		return encodeBMP(sd.Config, img)
 	}
 
+	// starting from Streamdeck MK1, the images have to be in JPG format
 	if sd.Config.ImageFormat == "jpg" {
 		buf := bytes.Buffer{}
 		err := jpeg.Encode(&buf, img, nil)
@@ -263,6 +265,7 @@ func (sd *StreamDeck) encodeImage(img image.Image) ([]byte, error) {
 
 }
 
+// encode all button images as BMP
 func encodeBMP(c *Config, img image.Image) ([]byte, error) {
 	imgBuf := []byte{
 		'\x42', '\x4D', '\xF6', '\x3C', '\x00', '\x00', '\x00', '\x00',
@@ -422,8 +425,8 @@ func (sd *StreamDeck) FillPanel(img image.Image) error {
 					Y: row*sd.Config.ButtonSize + row*sd.Config.Spacer,
 				},
 				Max: image.Point{
-					X: (1+col)*sd.Config.ButtonSize + col*sd.Config.Spacer,
-					Y: (1+row)*sd.Config.ButtonSize + row*sd.Config.Spacer,
+					X: col*sd.Config.ButtonSize + col*sd.Config.Spacer + sd.Config.ButtonSize - 1,
+					Y: row*sd.Config.ButtonSize + row*sd.Config.Spacer + sd.Config.ButtonSize - 1,
 				},
 			}
 			sub := img.(*image.RGBA).SubImage(rect)
