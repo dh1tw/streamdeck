@@ -154,6 +154,7 @@ func (sd *StreamDeck) SetBtnEventCb(ev BtnEvent) {
 func (sd *StreamDeck) read(ctx context.Context) {
 	defer sd.waitGroup.Done()
 	myState := State{}
+
 	for ctx.Err() == nil {
 		data := make([]byte, 24)
 		_, err := sd.device.Read(data)
@@ -162,22 +163,25 @@ func (sd *StreamDeck) read(ctx context.Context) {
 			continue
 		}
 
-		event, err := myState.Update(sd.Config, data)
+		fmt.Println("read data:", data)
+
+		events, err := myState.Update(sd.Config, data)
 		if err != nil {
 			fmt.Println(err)
 			continue
 		}
 
 		var cb BtnEvent
-
 		sd.lock.Lock()
 		cb = sd.btnEventCb
 		sd.lock.Unlock()
-
 		if cb != nil {
-			go func() {
-				cb(myState, event)
-			}()
+			for _, event := range events {
+				go func() {
+					fmt.Println("calling callback")
+					cb(myState, event)
+				}()
+			}
 		}
 	}
 }
@@ -235,12 +239,29 @@ func (sd *StreamDeck) FillColor(btnIndex, r, g, b int) error {
 }
 
 func (sd *StreamDeck) encodeImage(img image.Image) ([]byte, error) {
+	// if sd.Config.ImageRotate {
+	// 	b := img.Bounds()
+	// 	newImage := image.NewRGBA(image.Rect(0, 0, sd.Config.ButtonSize, sd.Config.ButtonSize))
+	// 	for x := 0; x < sd.Config.ButtonSize; x++ {
+	// 		for y := 0; y < sd.Config.ButtonSize; y++ {
+	// 			if sd.Config.ProductID == 0x60 {
+	// 				// Original StreamDeck: rotate 180 degrees
+	// 				newImage.Set(x, y, img.At(b.Min.X+x, b.Min.Y+y))
+	// 			} else {
+	// 				// New StreamDeck: rotate other direction
+	// 				newImage.Set(x, y, img.At(b.Min.X+sd.Config.ButtonSize-x, b.Min.Y+sd.Config.ButtonSize-y))
+	// 			}
+	// 		}
+	// 	}
+	// 	img = newImage
+	// }
+
+	// really needed?
 	if sd.Config.ImageRotate {
-		b := img.Bounds()
-		newImage := image.NewRGBA(image.Rect(0, 0, sd.Config.ButtonSize, sd.Config.ButtonSize))
+		newImage := image.NewRGBA(img.Bounds())
 		for x := 0; x < sd.Config.ButtonSize; x++ {
 			for y := 0; y < sd.Config.ButtonSize; y++ {
-				newImage.Set(x, y, img.At(b.Min.X+sd.Config.ButtonSize-x, b.Min.Y+sd.Config.ButtonSize-y))
+				newImage.Set(x, y, img.At(sd.Config.ButtonSize-x, sd.Config.ButtonSize-y))
 			}
 		}
 		img = newImage
@@ -422,8 +443,8 @@ func (sd *StreamDeck) FillPanel(img image.Image) error {
 					Y: row*sd.Config.ButtonSize + row*sd.Config.Spacer,
 				},
 				Max: image.Point{
-					X: (1+col)*sd.Config.ButtonSize + col*sd.Config.Spacer,
-					Y: (1+row)*sd.Config.ButtonSize + row*sd.Config.Spacer,
+					X: col*sd.Config.ButtonSize + col*sd.Config.Spacer + sd.Config.ButtonSize - 1,
+					Y: row*sd.Config.ButtonSize + row*sd.Config.Spacer + sd.Config.ButtonSize - 1,
 				},
 			}
 			sub := img.(*image.RGBA).SubImage(rect)
