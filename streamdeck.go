@@ -163,7 +163,7 @@ func (sd *StreamDeck) read(ctx context.Context) {
 			continue
 		}
 
-		debug("read data:", data)
+		debug("read data: %v", data)
 
 		events, err := myState.Update(sd.Config, data)
 		if err != nil {
@@ -457,6 +457,166 @@ func (sd *StreamDeck) FillPanelFromFile(path string) error {
 	return sd.FillPanel(img)
 }
 
+// FillLCD fills the entire LCD touchscreen panel with an image (Stream Deck Plus only).
+// The image will be resized to fit the LCD dimensions (800x100 pixels).
+func (sd *StreamDeck) FillLCD(img image.Image) error {
+	if !sd.Config.HasLCD() {
+		return fmt.Errorf("this Stream Deck model does not have an LCD panel")
+	}
+
+	return sd.fillLCDRegion(img, 0, sd.Config.LCDWidth, sd.Config.LCDHeight)
+}
+
+// FillLCDSegment fills a specific segment of the LCD panel (the area behind each encoder).
+// Segment index is 0-3 for Stream Deck Plus (left to right).
+func (sd *StreamDeck) FillLCDSegment(segmentIndex int, img image.Image) error {
+	if !sd.Config.HasLCD() {
+		return fmt.Errorf("this Stream Deck model does not have an LCD panel")
+	}
+
+	if segmentIndex < 0 || segmentIndex >= sd.Config.NumEncoders {
+		return fmt.Errorf("invalid segment index %d, must be 0-%d", segmentIndex, sd.Config.NumEncoders-1)
+	}
+
+	segmentWidth := sd.Config.LCDSegmentWidth()
+	xOffset := segmentIndex * segmentWidth
+
+	return sd.fillLCDRegion(img, xOffset, segmentWidth, sd.Config.LCDHeight)
+}
+
+// fillLCDRegion writes an image to a specific region of the LCD panel.
+func (sd *StreamDeck) fillLCDRegion(img image.Image, xOffset, width, height int) error {
+	// Resize image to fit the target region
+	rect := img.Bounds()
+	if rect.Dx() != width || rect.Dy() != height {
+		img = resize(img, width, height)
+	}
+
+	// Encode as JPEG
+	buf := bytes.Buffer{}
+	err := jpeg.Encode(&buf, img, nil)
+	if err != nil {
+		return err
+	}
+	imgBuf := buf.Bytes()
+
+	sd.lock.Lock()
+	defer sd.lock.Unlock()
+
+	// LCD uses 16-byte header with 1024-byte packets
+	headerSize := 16
+	bytesLeft := len(imgBuf)
+	pos := 0
+	chunkIndex := uint16(0)
+
+	for bytesLeft > 0 {
+		imgToSend := min(bytesLeft, 1024-headerSize)
+		bytesLeft -= imgToSend
+
+		packet := make([]byte, 1024)
+		packet[0] = 0x02
+		packet[1] = 0x0C
+		binary.LittleEndian.PutUint16(packet[2:], uint16(xOffset)) // X offset
+		packet[4] = 0x00                                           // constant
+		packet[5] = 0x00                                           // constant
+		binary.LittleEndian.PutUint16(packet[6:], uint16(width))   // image width
+		binary.LittleEndian.PutUint16(packet[8:], uint16(height))  // image height
+		if bytesLeft == 0 {
+			packet[10] = 0x01 // final chunk
+		} else {
+			packet[10] = 0x00
+		}
+		binary.LittleEndian.PutUint16(packet[11:], chunkIndex)        // chunk index
+		binary.LittleEndian.PutUint16(packet[13:], uint16(imgToSend)) // payload length
+		packet[15] = 0x00                                             // constant
+
+		copy(packet[16:], imgBuf[pos:(pos+imgToSend)])
+
+		debug("LCD write: xOffset=%d width=%d height=%d chunk=%d bytesLeft=%d imgToSend=%d",
+			xOffset, width, height, chunkIndex, bytesLeft, imgToSend)
+
+		n, err := sd.device.Write(packet)
+		if err != nil {
+			return err
+		}
+		if n != len(packet) {
+			return fmt.Errorf("only wrote %d of %d", n, len(packet))
+		}
+
+		chunkIndex++
+		pos += imgToSend
+	}
+
+	return nil
+}
+
+// FillLCDFromFile fills the entire LCD panel with an image from a file.
+func (sd *StreamDeck) FillLCDFromFile(path string) error {
+	reader, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer reader.Close()
+
+	img, _, err := image.Decode(reader)
+	if err != nil {
+		return err
+	}
+
+	return sd.FillLCD(img)
+}
+
+// FillLCDSegmentFromFile fills a specific LCD segment with an image from a file.
+func (sd *StreamDeck) FillLCDSegmentFromFile(segmentIndex int, path string) error {
+	reader, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer reader.Close()
+
+	img, _, err := image.Decode(reader)
+	if err != nil {
+		return err
+	}
+
+	return sd.FillLCDSegment(segmentIndex, img)
+}
+
+// ClearLCD fills the entire LCD panel with black.
+func (sd *StreamDeck) ClearLCD() error {
+	if !sd.Config.HasLCD() {
+		return fmt.Errorf("this Stream Deck model does not have an LCD panel")
+	}
+
+	img := image.NewRGBA(image.Rect(0, 0, sd.Config.LCDWidth, sd.Config.LCDHeight))
+	draw.Draw(img, img.Bounds(), image.NewUniform(color.Black), image.Point{0, 0}, draw.Src)
+
+	return sd.FillLCD(img)
+}
+
+// FillLCDColor fills the entire LCD panel with a solid color.
+func (sd *StreamDeck) FillLCDColor(r, g, b int) error {
+	if !sd.Config.HasLCD() {
+		return fmt.Errorf("this Stream Deck model does not have an LCD panel")
+	}
+
+	if err := checkRGB(r); err != nil {
+		return err
+	}
+	if err := checkRGB(g); err != nil {
+		return err
+	}
+	if err := checkRGB(b); err != nil {
+		return err
+	}
+
+	img := image.NewRGBA(image.Rect(0, 0, sd.Config.LCDWidth, sd.Config.LCDHeight))
+	c := color.RGBA{uint8(r), uint8(g), uint8(b), 255}
+	draw.Draw(img, img.Bounds(), image.NewUniform(c), image.Point{0, 0}, draw.Src)
+
+	return sd.FillLCD(img)
+}
+
 // WriteText can write several lines of Text to a button. It is up to the
 // user to ensure that the lines fit properly on the button.
 func (sd *StreamDeck) WriteText(btnIndex int, textBtn TextButton) error {
@@ -506,6 +666,96 @@ func (sd *StreamDeck) checkValidKeyIndex(keyIndex int) error {
 		return fmt.Errorf("invalid key index")
 	}
 	return nil
+}
+
+// LCDTextLine holds the content of one text line for LCD display.
+type LCDTextLine struct {
+	Text      string
+	PosX      int
+	PosY      int
+	Font      *truetype.Font
+	FontSize  float64
+	FontColor color.Color
+}
+
+// WriteTextToLCD writes text lines to the entire LCD panel with a background color.
+func (sd *StreamDeck) WriteTextToLCD(bgColor color.Color, lines []LCDTextLine) error {
+	if !sd.Config.HasLCD() {
+		return fmt.Errorf("this Stream Deck model does not have an LCD panel")
+	}
+
+	img := image.NewRGBA(image.Rect(0, 0, sd.Config.LCDWidth, sd.Config.LCDHeight))
+	draw.Draw(img, img.Bounds(), image.NewUniform(bgColor), image.Point{0, 0}, draw.Src)
+
+	return sd.WriteTextToLCDOnImage(img, lines)
+}
+
+// WriteTextToLCDOnImage writes text lines to the LCD panel on top of a provided image.
+func (sd *StreamDeck) WriteTextToLCDOnImage(imgIn image.Image, lines []LCDTextLine) error {
+	if !sd.Config.HasLCD() {
+		return fmt.Errorf("this Stream Deck model does not have an LCD panel")
+	}
+
+	img := resize(imgIn, sd.Config.LCDWidth, sd.Config.LCDHeight)
+
+	for _, line := range lines {
+		font := line.Font
+		if font == nil {
+			font = MonoRegular
+		}
+		fontColor := image.NewUniform(line.FontColor)
+		c := freetype.NewContext()
+		c.SetDPI(72)
+		c.SetFont(font)
+		c.SetFontSize(line.FontSize)
+		c.SetClip(img.Bounds())
+		c.SetDst(img)
+		c.SetSrc(fontColor)
+		pt := freetype.Pt(line.PosX, line.PosY+int(c.PointToFixed(line.FontSize)>>6))
+
+		if _, err := c.DrawString(line.Text, pt); err != nil {
+			return err
+		}
+	}
+
+	return sd.FillLCD(img)
+}
+
+// WriteTextToLCDSegment writes text lines to a specific LCD segment with a background color.
+func (sd *StreamDeck) WriteTextToLCDSegment(segmentIndex int, bgColor color.Color, lines []LCDTextLine) error {
+	if !sd.Config.HasLCD() {
+		return fmt.Errorf("this Stream Deck model does not have an LCD panel")
+	}
+
+	if segmentIndex < 0 || segmentIndex >= sd.Config.NumEncoders {
+		return fmt.Errorf("invalid segment index %d, must be 0-%d", segmentIndex, sd.Config.NumEncoders-1)
+	}
+
+	segmentWidth := sd.Config.LCDSegmentWidth()
+	img := image.NewRGBA(image.Rect(0, 0, segmentWidth, sd.Config.LCDHeight))
+	draw.Draw(img, img.Bounds(), image.NewUniform(bgColor), image.Point{0, 0}, draw.Src)
+
+	for _, line := range lines {
+		font := line.Font
+		if font == nil {
+			font = MonoRegular
+		}
+		fontColor := image.NewUniform(line.FontColor)
+		c := freetype.NewContext()
+		c.SetDPI(72)
+		c.SetFont(font)
+		c.SetFontSize(line.FontSize)
+		c.SetClip(img.Bounds())
+		c.SetDst(img)
+		c.SetSrc(fontColor)
+		pt := freetype.Pt(line.PosX, line.PosY+int(c.PointToFixed(line.FontSize)>>6))
+
+		if _, err := c.DrawString(line.Text, pt); err != nil {
+			return err
+		}
+	}
+
+	return sd.FillLCDSegment(segmentIndex, img)
 }
 
 // b 0 -> 100

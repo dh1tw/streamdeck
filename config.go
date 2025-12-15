@@ -13,6 +13,10 @@ type Config struct {
 	ImageFormat      string
 	ImageRotate      bool
 	ConvertKey       bool
+	// LCD touchscreen panel (Stream Deck Plus only)
+	LCDWidth    int // Width of the LCD touchscreen panel (0 if not present)
+	LCDHeight   int // Height of the LCD touchscreen panel
+	NumEncoders int // Number of rotary encoders (for calculating LCD segment widths)
 }
 
 func (c Config) NumButtons() int {
@@ -27,6 +31,19 @@ func (c *Config) PanelWidth() int {
 // PanelHeight is the total screen height of the stream deck (including spacers).
 func (c *Config) PanelHeight() int {
 	return c.NumButtonRows*c.ButtonSize + c.Spacer*(c.NumButtonRows-1)
+}
+
+// HasLCD returns true if this Stream Deck model has an LCD touchscreen panel.
+func (c *Config) HasLCD() bool {
+	return c.LCDWidth > 0 && c.LCDHeight > 0
+}
+
+// LCDSegmentWidth returns the width of each LCD segment (area behind each encoder).
+func (c *Config) LCDSegmentWidth() int {
+	if c.NumEncoders == 0 {
+		return 0
+	}
+	return c.LCDWidth / c.NumEncoders
 }
 
 func (c *Config) fixKey(key int) int {
@@ -76,6 +93,9 @@ var Plus = Config{
 	Spacer:           19,
 	ButtonSize:       120,
 	ImageFormat:      "jpg",
+	LCDWidth:         800,
+	LCDHeight:        100,
+	NumEncoders:      4,
 }
 
 var AllConfigs = []Config{Original, OriginalMk1, Original2, Plus}
