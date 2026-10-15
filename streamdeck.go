@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/disintegration/gift"
 	"github.com/golang/freetype"
@@ -42,10 +43,13 @@ type BtnEvent func(s State, e Event)
 
 // StreamDeck is the object representing the Elgato Stream Deck.
 type StreamDeck struct {
-	lock       sync.Mutex
-	device     *hid.Device
-	btnEventCb BtnEvent
-	Config     *Config
+	lock         sync.Mutex
+	device       *hid.Device
+	btnEventCb   BtnEvent
+	Config       *Config
+	serial       string
+	buttonImages []image.Image
+	brightness   *uint16
 
 	waitGroup sync.WaitGroup
 	cancel    context.CancelFunc
@@ -83,17 +87,8 @@ func NewStreamDeck(serial ...string) (*StreamDeck, error) {
 	return NewStreamDeckWithConfig(nil, s)
 }
 
-// NewStreamDeckWithConfig is the constructor for a custom config.
-func NewStreamDeckWithConfig(c *Config, serial string) (*StreamDeck, error) {
-
-	if c == nil {
-		cc, found := FindConnectedConfig()
-		if !found {
-			return nil, fmt.Errorf("no streamdeck device found with any config")
-		}
-		c = &cc
-	}
-
+// getDevice enumerates and opens a StreamDeck device based on the provided config and serial number.
+func getDevice(c *Config, serial string) (*hid.Device, error) {
 	devices := hid.Enumerate(VendorID, c.ProductID)
 
 	if len(devices) == 0 {
@@ -125,9 +120,31 @@ func NewStreamDeckWithConfig(c *Config, serial string) (*StreamDeck, error) {
 
 	log.Printf("Connected to StreamDeck: %v", devices[id])
 
+	return device, nil
+}
+
+// NewStreamDeckWithConfig is the constructor for a custom config.
+func NewStreamDeckWithConfig(c *Config, serial string) (*StreamDeck, error) {
+
+	if c == nil {
+		cc, found := FindConnectedConfig()
+		if !found {
+			return nil, fmt.Errorf("no streamdeck device found with any config")
+		}
+		c = &cc
+	}
+
+	device, err := getDevice(c, serial)
+	if err != nil {
+		return nil, err
+	}
+
 	sd := &StreamDeck{
-		device: device,
-		Config: c,
+		device:       device,
+		Config:       c,
+		serial:       serial,
+		buttonImages: make([]image.Image, c.NumButtons()),
+		brightness:   nil,
 	}
 
 	sd.ClearAllBtns()
@@ -155,11 +172,49 @@ func (sd *StreamDeck) read(ctx context.Context) {
 	defer sd.waitGroup.Done()
 	myState := State{}
 
+	var lastErr error
+	var lastErrTime time.Time
+
+	var lastReconnectionErr error
+	var lastReconnectionErrTime time.Time
+
 	for ctx.Err() == nil {
 		data := make([]byte, 24)
 		_, err := sd.device.Read(data)
 		if err != nil {
-			fmt.Println(err)
+			lastErr, lastErrTime = logErrorIfNew(err, lastErr, lastErrTime)
+
+			device, err := getDevice(sd.Config, sd.serial)
+			if err != nil {
+				lastReconnectionErr, lastReconnectionErrTime = logErrorIfNew(err, lastReconnectionErr, lastReconnectionErrTime)
+				time.Sleep(200 * time.Millisecond)
+			} else {
+				sd.lock.Lock()
+				sd.device = device
+				// Save button images before clearing
+				savedImages := make([]image.Image, len(sd.buttonImages))
+				copy(savedImages, sd.buttonImages)
+				sd.lock.Unlock()
+
+				sd.ClearAllBtns()
+				// Restore and redraw all buttons that had images stored
+				for i := range savedImages {
+					if savedImages[i] != nil {
+						err = sd.FillImage(i, savedImages[i])
+						if err != nil {
+							fmt.Printf("Failed to redraw button %d after reconnection: %v\n", i, err)
+						}
+					}
+				}
+				if sd.brightness != nil {
+					err = sd.SetBrightness(*sd.brightness)
+					if err != nil {
+						fmt.Printf("Failed to set brightness after reconnection: %v\n", err)
+					}
+				}
+				lastReconnectionErr = nil
+				lastReconnectionErrTime = time.Time{}
+			}
 			continue
 		}
 
@@ -309,6 +364,8 @@ func (sd *StreamDeck) FillImage(btnIndex int, img image.Image) error {
 
 	sd.lock.Lock()
 	defer sd.lock.Unlock()
+
+	sd.buttonImages[btnIndex] = img
 
 	if sd.Config.ImageFormat == "bmp" {
 		splitPoint := 7803
@@ -510,6 +567,9 @@ func (sd *StreamDeck) checkValidKeyIndex(keyIndex int) error {
 
 // b 0 -> 100
 func (sd *StreamDeck) SetBrightness(b uint16) error {
+	sd.lock.Lock()
+	sd.brightness = &b
+	sd.lock.Unlock()
 
 	buf := []byte{0x03, 0x08, 0xFF, 0xFF}
 	binary.LittleEndian.PutUint16(buf[2:], b)
@@ -546,4 +606,14 @@ func checkRGB(value int) error {
 		return fmt.Errorf("invalid color range")
 	}
 	return nil
+}
+
+// logErrorIfNew logs an error if it's a new error or if it's been at least a minute since the last identical error.
+// It returns the updated lastErr and lastErrTime when the error is logged, otherwise returns the original values.
+func logErrorIfNew(err error, lastErr error, lastErrTime time.Time) (error, time.Time) {
+	if lastErr == nil || err.Error() != lastErr.Error() || time.Since(lastErrTime) >= time.Minute {
+		fmt.Println(err)
+		return err, time.Now()
+	}
+	return lastErr, lastErrTime
 }
